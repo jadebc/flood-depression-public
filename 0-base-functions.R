@@ -4,6 +4,22 @@
 # regression analysis of flooding and depression
 #########################################
 
+##############################################
+##############################################
+# Documentation: screen_covariates
+# Usage: screen_covariates(Y, Ws, family = "gaussian", pval = 0.2, print = TRUE)
+# Description: Screens covariates for association with the outcome using likelihood ratio tests
+
+# Args/Options:
+# Y: the outcome variable
+# Ws: a data frame or matrix of potential covariates
+# family: the family to be used in the glm function (DEFAULT: "gaussian")
+# pval: the p-value threshold for selecting covariates (DEFAULT: 0.2)
+# print: a boolean specifying whether to print the results (DEFAULT: TRUE)
+
+# Returns: a vector of names of selected covariates
+# Output: prints the selected covariates and their p-values if print is TRUE
+
 screen_covariates <- function (Y, Ws, family = "gaussian", pval = 0.2, print = TRUE){
   require(lmtest)
   Ws <- as.data.frame(Ws)
@@ -45,6 +61,22 @@ screen_covariates <- function (Y, Ws, family = "gaussian", pval = 0.2, print = T
   }
   return(names(Ws)[p20 == 1])
 }
+
+##############################################
+##############################################
+# Documentation: fit_glm
+# Usage: fit_glm(data, Y_name, A_name, family = "gaussian", covariates = NULL)
+# Description: Fits a generalized linear model (GLM) with optional covariate screening and adjustment
+
+# Args/Options:
+# data: a data frame containing the outcome, treatment, and covariate variables
+# Y_name: a string specifying the name of the outcome variable in the data frame
+# A_name: a string specifying the name of the treatment variable in the data frame
+# family: the family to be used in the glm function (DEFAULT: "gaussian")
+# covariates: a vector of covariate names to be considered for adjustment (DEFAULT: NULL)
+
+# Returns: a data frame with model estimates, confidence intervals, and other relevant information
+# Output: prints the results data frame
 
 fit_glm <- function(data, Y_name, A_name, family = "gaussian", covariates = NULL){
   Y <- data[,Y_name]
@@ -100,9 +132,18 @@ fit_glm <- function(data, Y_name, A_name, family = "gaussian", covariates = NULL
 }
 
 
-# write an R function that obtains the odds ratio and 95% confidence interval for a glm model
-# or the mean difference and confidence interval 
-# for a t-test
+##############################################
+##############################################
+# Documentation: get_estimate
+# Usage: get_estimate(model)
+# Description: Extracts point estimates and confidence intervals from a GLM object
+
+# Args/Options:
+# model: a GLM object from which to extract estimates
+
+# Returns: a data frame containing the number of observations, point estimates, and confidence intervals
+# Output: none (returns the data frame silently)
+
 get_estimate <- function(model){
   if(family(model)$family =="gaussian"){
     out = cbind(pt_estimate = coef(model), confint(model))
