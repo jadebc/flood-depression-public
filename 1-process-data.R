@@ -179,6 +179,6 @@ baseline <- baseline %>%
 library(readxl)
 flood_prep <- read_excel("~/Downloads/flood_preparedness.xlsx")
 
-baseline <- bind_cols(baseline, flood_prep)
+# baseline <- bind_cols(baseline, flood_prep)
 
-saveRDS(baseline, paste0(here::here(), "/data/baseline_clean.RDS"))
+saveRDS(baseline, paste0(data_dir, "baseline_clean.RDS"))
