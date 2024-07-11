@@ -24,6 +24,7 @@ screen_covariates <- function (Y, Ws, family = "gaussian", pval = 0.2, print = T
   require(lmtest)
   Ws <- as.data.frame(Ws)
   dat <- bind_cols(Y, Ws)
+  colnames(dat)[1] = "Y"
   dat <- dat[complete.cases(dat), ]
   nW <- ncol(Ws)
   LRp <- matrix(rep(NA, nW), nrow = nW, ncol = 1)
