@@ -170,97 +170,100 @@ get_estimate <- function(model){
 ##############################################
 # Documentation: run_random_forest
 # Usage: run_random_forest(data, outcome, predictors)
-# Description: Runs a random forest model with preprocessing, hyperparameter tuning, and variable importance analysis
-
+# Description: Runs a random forest model using cforest with preprocessing, hyperparameter tuning, and variable importance analysis
+#
 # Args/Options:
 # data: a data frame containing the outcome and predictor variables
 # outcome: a string specifying the name of the outcome variable
 # predictors: a vector of strings specifying the names of the predictor variables
-
+#
 # Returns: a list containing:
-#   - rf_model: the final random forest model
+#   - rf_model: the final random forest model (cforest object)
+#   - tuned_model: the tuned model object from caret
+#   - best_mtry: the best mtry value found during tuning
 #   - oob_error: out-of-bag error rate
 #   - oob_accuracy: out-of-bag accuracy
-#   - var_importance_sorted: data frame of sorted variable importance
-#   - top_vars: vector of variables in the top 20% of importance
-# Output: prints the best model from tuning and the sorted variable importance
+#   - var_importance_sorted: data frame of sorted variable importance with categories
+#   - top_vars: vector of variables in the top 25% of importance
+#
+# Output: 
+#   - prints the best mtry value
+#   - prints the sorted variable importance
+#
+# Note: This function uses the cforest method from the party package and tunes only the mtry parameter.
+#       Binary variables are converted to factors, and numeric variables are standardized.
+##############################################
+##############################################
 
-run_random_forest <- function(data, outcome, predictors){
-  # restrict to necessary columns and compete cases
+run_random_forest <- function(data, outcome, predictors) {
+  library(party)
+  library(caret)
+  
+  # Restrict to necessary columns and complete cases
   vi_data <- data %>% dplyr::select(all_of(c(outcome, predictors))) 
   vi_data <- vi_data[complete.cases(vi_data),]
-
-  # recode binary variables as factors
+  
+  # Recode binary variables as factors
   binary_vars <- colnames(vi_data)[apply(vi_data, 2, function(x) length(unique(x))==2)]
-
-  # write a function to convert a numeric 0/1 to a factor "no"/"yes"
   convert_binary <- function(x) {
     as.factor(ifelse(x == 0, "no", "yes"))
   }
-  
   vi_data <- vi_data %>% mutate_at(binary_vars, convert_binary)
   
-  # Standardize numeric features ------------------------------------------------
+  # Standardize numeric features
   numeric_vars <- sapply(vi_data, is.numeric)
   data_scaled <- vi_data
   data_scaled[, numeric_vars] <- scale(data_scaled[, numeric_vars])
   
-  # Create a formula for modeling -----------------------------------------
+  # Create a formula for modeling
   formula <- as.formula(paste(outcome, "~", paste(predictors, collapse = " + ")))
   
-  # Define tuning grid ----------------------------------------------------
-  tuning_grid <- expand.grid(
-    mtry = seq(2, ncol(data_scaled) - 1, by = 2),
-    min.node.size = c(1, 3, 5),
-    splitrule = "gini"
+  # Set up cross-validation
+  ctrl <- trainControl(
+    method = "cv",
+    number = 10,
+    classProbs = TRUE,
+    summaryFunction = twoClassSummary
   )
   
-  # Set up cross-validation
-  # use 10-fold cv
-  ctrl <- trainControl(method = "cv", 
-                       number = 10, 
-                       classProbs = TRUE, 
-                       summaryFunction = twoClassSummary)
+  # Tune mtry
+  set.seed(123)  # for reproducibility
+  mtry_grid <- expand.grid(mtry = seq(2, length(predictors), by = 2))
   
-  # Train model
-  rf_model <- train(formula, data = data_scaled,
-                    method = "ranger",
-                    tuneGrid = tuning_grid,
-                    trControl = ctrl,
-                    metric = "ROC")
+  tuned_model <- train(
+    formula,
+    data = data_scaled,
+    method = "cforest",
+    trControl = ctrl,
+    tuneGrid = mtry_grid,
+    controls = cforest_unbiased(ntree = 500),
+    metric = "ROC"
+  )
   
-  # View best model
-  print(rf_model)
+  best_mtry <- tuned_model$bestTune$mtry
   
-  # Random Forest Method
-  rf_model <- randomForest(formula, 
-                           data = data_scaled, 
-                           min.node.size = 3,
-                           mtry = 2,
-                           splitrule = "gini",
-                           importance = TRUE, 
-                           ntree = 500)
+  # Print best mtry
+  cat("Best mtry:", best_mtry, "\n")
   
-  # Get OOB error rate
-  oob_error <- rf_model$err.rate[nrow(rf_model$err.rate), "OOB"]
-  
-  # Calculate OOB accuracy
-  oob_accuracy <- 1 - oob_error
+  # Train final model with best mtry and a fixed mincriterion
+  final_ctrl <- cforest_unbiased(ntree = 500, mtry = best_mtry)  # You can adjust this value if needed
+  rf_model <- cforest(formula, data = data_scaled, controls = final_ctrl)
   
   # Get variable importance
-  var_importance <- importance(rf_model, type = 1)
+  var_importance <- varimp(rf_model)
   
   # Sort importance and convert to dataframe
   var_importance_sorted <- data.frame(
-    variable = rownames(var_importance),
-    importance = var_importance[, "MeanDecreaseAccuracy"]
+    variable = names(var_importance),
+    importance = var_importance
   ) %>%
     arrange(desc(importance))
   
   # Print sorted importance
   print(var_importance_sorted)
   
-  var_importance_sorted = var_importance_sorted %>% mutate(
+  # Add variable categories
+  var_importance_sorted <- var_importance_sorted %>% mutate(
     var_cat = case_when(
       variable %in% c("bike", "boat", "elec","moto", "fuel_dung", "fuel_grass", "fuel_wood",
                       "income","hhsize","wealth_index") ~ "Economic",
@@ -269,23 +272,34 @@ run_random_forest <- function(data, outcome, predictors){
                       "flood_compound", "flood_union") ~ "Water and flooding",
       variable %in% c("n_cow", "n_goat", "n_chicken") ~ "Animal ownership",
       variable %in% c("own_house", "private_toilet", "satisfied_house") ~ "Housing"
-      
     )
   )
-
-  # List variables in top 20% of importance
+  
+  # List variables in top 25% of importance
   top_vars <- var_importance_sorted %>%
-    filter(importance >= quantile(importance, 0.8)) %>%
+    filter(importance >= quantile(importance, 0.75)) %>%
     pull(variable)
+  
+  # Calculate the range of negative importance values
+  neg_range <- range(var_importance_sorted$importance[var_importance_sorted$importance < 0])
+  
+  # Filter out variables with negative, zero, or small positive importance
+  filtered_importance <- var_importance_sorted %>%
+    filter(importance > 0 & importance > neg_range[2])
+  
+  # Calculate OOB error
+  oob_prediction <- predict(rf_model, OOB = TRUE, type = "response")
+  oob_error <- mean(oob_prediction != data_scaled[[outcome]])
+  oob_accuracy <- 1 - oob_error
   
   return(list(
     rf_model = rf_model,
+    tuned_model = tuned_model,
+    best_mtry = best_mtry,
     oob_error = oob_error, 
     oob_accuracy = oob_accuracy, 
     var_importance_sorted = var_importance_sorted, 
-    top_vars = top_vars
+    top_vars = top_vars,
+    filtered_importance = filtered_importance
   ))
 }
-
-
-
