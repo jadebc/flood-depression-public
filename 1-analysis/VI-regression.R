@@ -14,21 +14,21 @@ rf_resilience <- readRDS(paste0(data_dir, "rf_resilience.RDS"))
 
 # depression models ------------------------------------------------
 dep_hhsize_model <- fit_glm(data=baseline, Y_name="depression", A_name="hhsize",
-                            covariates = "wealth_index", family = "binomial")[1,]
+                            covariates = "wealth_index", family = "poisson")[1,]
 dep_age_model <- fit_glm(data=baseline, Y_name="depression", A_name="mother_age",
-                         family = "binomial")[1,]
+                         family = "poisson")[1,]
 dep_floodc_model <- fit_glm(data=baseline, Y_name="depression", A_name="flood_compound",
                             covariates = c("wealth_index", "month", "dist_to_perm_water", "dist_to_seasonal_water"),
-                            family = "binomial")[1,]
+                            family = "poisson")[1,]
 dep_income_model <- fit_glm(data=baseline, Y_name="depression", A_name="flood_compound",
                             covariates = c("month"),
-                            family = "binomial")[1,]
+                            family = "poisson")[1,]
 # ADD UNION: 
 dep_edu_model <- fit_glm(data=baseline, Y_name="depression", A_name="mother_edu",
-                         covariates = c("wealth_index"), family = "binomial")[1,]
+                         covariates = c("wealth_index"), family = "poisson")[1,]
 dep_floodlat_model <- fit_glm(data=baseline, Y_name="depression", A_name="latrine_flooded",
                               covariates = c("wealth_index", "month", "dist_to_perm_water", "dist_to_seasonal_water"),
-                              family = "binomial")[1,]
+                              family = "poisson")[1,]
 
 depression_ORs <- bind_rows(
   dep_hhsize_model, dep_age_model, dep_floodc_model, dep_edu_model, dep_floodlat_model
@@ -50,18 +50,18 @@ ggplot(depression_ORs, aes(x = label, y = pt_estimate, ymin = CI_lower, ymax = C
 
 # resilience models ------------------------------------------------
 res_hhsize_model <- fit_glm(data=baseline, Y_name="resilient", A_name="hhsize",
-                            covariates = "wealth_index", family = "binomial")[1,]
+                            covariates = "wealth_index", family = "poisson")[1,]
 res_age_model <- fit_glm(data=baseline, Y_name="depression", A_name="mother_age",
-                         family = "binomial")[1,]
+                         family = "poisson")[1,]
 res_floodc_model <- fit_glm(data=baseline, Y_name="resilient", A_name="flood_compound",
                             covariates = c("wealth_index", "month", "dist_to_perm_water", "dist_to_seasonal_water"),
-                            family = "binomial")[1,]
+                            family = "poisson")[1,]
 # ADD UNION: 
 res_edu_model <- fit_glm(data=baseline, Y_name="resilient", A_name="mother_edu",
-                         covariates = c("wealth_index"), family = "binomial")[1,]
+                         covariates = c("wealth_index"), family = "poisson")[1,]
 res_floodlat_model <- fit_glm(data=baseline, Y_name="resilient", A_name="latrine_flooded",
                               covariates = c("wealth_index", "month", "dist_to_perm_water", "dist_to_seasonal_water"),
-                              family = "binomial")[1,]
+                              family = "poisson")[1,]
 
 resilience_ORs <- bind_rows(
   dep_hhsize_model, dep_age_model, dep_floodc_model, dep_edu_model, dep_floodlat_model
