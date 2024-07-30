@@ -40,7 +40,7 @@ res_dep_floodc_unadj <- fit_glm(data=d, Y_name="depression", A_name="flood_compo
 res_dep_floodc_adj <- fit_glm(data=d, Y_name="depression", A_name="flood_compound",
                                covariates=covariates, family = "binomial")
 
-## depression -------------
+## severe depression -------------
 # prevalence in exposed, unexposed
 mean(d$depression_severe[d$flood_compound==1])
 mean(d$depression_severe[d$flood_compound==0])
@@ -99,12 +99,14 @@ res_sdep_floodu_adj <- fit_glm(data=d, Y_name="depression_severe", A_name="flood
 # combine and save results ------------------------------------------------
 res <- data.frame(
   bind_rows(res_epds_floodc_unadj, res_epds_floodu_unadj, 
-            res_dep_floodc_unadj, res_dep_floodu_unadj,
-            res_sdep_floodc_unadj, res_sdep_floodc_adj,
             res_epds_floodc_adj, res_epds_floodu_adj, 
+            
+            res_dep_floodc_unadj, res_dep_floodu_unadj,
             res_dep_floodc_adj, res_dep_floodu_adj,
-            res_sdep_floodu_unadj, res_sdep_floodu_adj)
+            
+            res_sdep_floodc_unadj, res_sdep_floodu_unadj, 
+            res_sdep_floodc_adj, res_sdep_floodu_adj)
 )
 
-saveRDS(res, paste0(data_dir, "/depression_regression_results.RDS"))
+saveRDS(res, paste0(data_dir, "/depression_flood_regression_results.RDS"))
 

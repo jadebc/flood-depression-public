@@ -82,12 +82,13 @@ screen_covariates <- function (Y, Ws, family = "gaussian", pval = 0.2, print = T
 fit_glm <- function(data, Y_name, A_name, family = "gaussian", covariates = NULL){
   Y <- data[,Y_name]
   
-  if(family=="binomial") Y <- as.factor(Y)
+  if(family!="gaussian") Y <- as.factor(Y)
     
   if(!is.null(covariates)){
     # covariate screening
     Ws <- data %>% dplyr::select(all_of(covariates))
-    covs <- screen_covariates(Y, Ws, family = family)
+    screen_family = ifelse(family=="gaussian","gaussian","binomial")
+    covs <- screen_covariates(Y, Ws, family = screen_family)
     if(length(covs)>1){
       # check for collinearity
       cormatrix <- cor(data[,c(covs)])
@@ -120,6 +121,7 @@ fit_glm <- function(data, Y_name, A_name, family = "gaussian", covariates = NULL
   } 
   
   estimates <- estimates %>% mutate(parameter_type = ifelse(family=="binomial","odds ratio","mean difference"))
+  estimates <- estimates %>% mutate(parameter_type = ifelse(family=="poisson","prevalence ratio","mean difference"))
   
   estimates <- estimates %>% mutate(label = rownames(estimates),
                                     outcome = Y_name)
@@ -152,7 +154,7 @@ get_estimate <- function(model){
   if(family(model)$family =="gaussian"){
     out = cbind(pt_estimate = coef(model), confint(model))
   }
-  if(family(model)$family =="binomial"){
+  if(family(model)$family %in% c("binomial", "poisson")){
     out = exp(cbind(pt_estimate = coef(model), confint(model)))
   }
   # remove intercept
@@ -210,11 +212,6 @@ run_random_forest <- function(data, outcome, predictors) {
   }
   vi_data <- vi_data %>% mutate_at(binary_vars, convert_binary)
   
-  # Standardize numeric features
-  numeric_vars <- sapply(vi_data, is.numeric)
-  data_scaled <- vi_data
-  data_scaled[, numeric_vars] <- scale(data_scaled[, numeric_vars])
-  
   # Create a formula for modeling
   formula <- as.formula(paste(outcome, "~", paste(predictors, collapse = " + ")))
   
@@ -232,7 +229,7 @@ run_random_forest <- function(data, outcome, predictors) {
   
   tuned_model <- train(
     formula,
-    data = data_scaled,
+    data = vi_data,
     method = "cforest",
     trControl = ctrl,
     tuneGrid = mtry_grid,
@@ -247,7 +244,7 @@ run_random_forest <- function(data, outcome, predictors) {
   
   # Train final model with best mtry and a fixed mincriterion
   final_ctrl <- cforest_unbiased(ntree = 500, mtry = best_mtry)  # You can adjust this value if needed
-  rf_model <- cforest(formula, data = data_scaled, controls = final_ctrl)
+  rf_model <- cforest(formula, data = vi_data, controls = final_ctrl)
   
   # Get variable importance
   var_importance <- varimp(rf_model)
@@ -289,7 +286,7 @@ run_random_forest <- function(data, outcome, predictors) {
   
   # Calculate OOB error
   oob_prediction <- predict(rf_model, OOB = TRUE, type = "response")
-  oob_error <- mean(oob_prediction != data_scaled[[outcome]])
+  oob_error <- mean(oob_prediction != vi_data[[outcome]])
   oob_accuracy <- 1 - oob_error
   
   return(list(
