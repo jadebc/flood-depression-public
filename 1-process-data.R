@@ -8,7 +8,7 @@ library(lubridate)
 library(readstata13)
 source(paste0(here::here(), '/0-config.R'))
 
-baseline_raw=read.dta13("/Users/jadebc/Library/CloudStorage/Box-Box/Jade Benjamin-Chung's Externally Shareable Files/CRADLE-Data/Baseline/CRADLE_Baseline_data.dta", convert.factors=F)
+baseline_raw=read.dta13(paste0(box_path_cradle_data,"Baseline/CRADLE_Baseline_data.dta"), convert.factors=F)
 
 #----------------------------------------
 # rename variables and create new variables
@@ -107,7 +107,7 @@ baseline <- baseline %>%
 #----------------------------------------
 # water distance
 #----------------------------------------
-water <- read.csv("/Users/jadebc/Library/CloudStorage/Box-Box/Jade Benjamin-Chung's Externally Shareable Files/CRADLE-Data/Water-distance/cradle_hh_water_distance.csv") %>% 
+water <- read.csv(paste0(box_path_cradle_data, "Water-distance/Baseline_survey_water_dist.csv")) %>% 
   mutate(dataid = as.character(dataid)) %>% 
   dplyr::select(dataid, dist_to_perm_water, dist_to_seasonal_water)
 
@@ -177,8 +177,10 @@ baseline <- baseline %>%
 # flood preparedness
 #----------------------------------------
 library(readxl)
+# SUHI PLEASE UPDATE PATH TO USE BOX AFTER YOUR FINISH TRANSLATING
 flood_prep <- read_excel("~/Downloads/flood_preparedness.xlsx")
 
 # baseline <- bind_cols(baseline, flood_prep)
 
 saveRDS(baseline, paste0(data_dir, "baseline_clean.RDS"))
+
