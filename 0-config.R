@@ -29,7 +29,7 @@ if(Sys.getenv("LOGNAME")=="gabriellabh"){
 }
 
 if(Sys.getenv("LOGNAME")=="suhi"){
-  box_path = "/Users/suhi/Box Sync/"
+  box_path = "/Users/suhi/Library/CloudStorage/Box-Box/"
 }
 
 box_path_cradle_data = paste0(box_path, "CRADLE-Data/")
@@ -40,3 +40,7 @@ box_shapefile_path = paste0(box_path_cradle_data, "Shapefiles/")
 data_dir = paste0(box_path, "CRADLE-Flooding-depression/")
 figure_path = here::here("figures/")
 table_path = here::here("tables/")
+
+
+
+

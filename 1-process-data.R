@@ -1,14 +1,13 @@
-#########################################
-# CRADLE depression and flooding analysis
 
-# create analysis dataset
-#########################################
 rm(list=ls())
+#install.packages("psych")
 library(lubridate)
 library(readstata13)
 source(paste0(here::here(), '/0-config.R'))
 
-baseline_raw=read.dta13("/Users/jadebc/Library/CloudStorage/Box-Box/Jade Benjamin-Chung's Externally Shareable Files/CRADLE-Data/Baseline/CRADLE_Baseline_data.dta", convert.factors=F)
+#baseline_raw=read.dta13("/Users/jadebc/Library/CloudStorage/Box-Box/Jade Benjamin-Chung's Externally Shareable Files/CRADLE-Data/Baseline/CRADLE_Baseline_data.dta", convert.factors=F)
+baseline_raw=read.dta13("/Users/suhi/Downloads/CRADLE_Baseline_data.dta", convert.factors=F)
+
 
 #----------------------------------------
 # rename variables and create new variables
@@ -52,6 +51,7 @@ baseline <- baseline_raw %>% rename(flood_compound = q21_1,
          fuel_dung = ifelse(q19_3==3, 1, 0)) %>% 
   mutate(private_toilet = ifelse(q16_28 == 1, 1, 0),
          satisfied_house = ifelse(q14_30 <=2, 1, 0))
+
 
 #----------------------------------------
 # replace missing codes with NA
@@ -104,10 +104,28 @@ baseline <- baseline %>%
     TRUE ~ 3
   ))
 
+# legnth of flooding 
+baseline <- baseline %>% 
+  rename(num_days_home_flooded = q21_4, 
+         num_days_latrine_flooded = q21_6,
+         num_days_tubewell_flooded = q21_8)
+
+
+baseline <- baseline %>% #converting responses in hours to days 
+  mutate(num_days_home_flooded = ifelse(q21_4a == 2, num_days_home_flooded / 24, num_days_home_flooded),
+        num_days_latrine_flooded = ifelse(q21_6a == 2, num_days_latrine_flooded / 24, num_days_latrine_flooded),
+        num_days_tubewell_flooded = ifelse(q21_8a == 2, num_days_tubewell_flooded / 24, num_days_tubewell_flooded))
+
+
 #----------------------------------------
 # water distance
 #----------------------------------------
-water <- read.csv("/Users/jadebc/Library/CloudStorage/Box-Box/Jade Benjamin-Chung's Externally Shareable Files/CRADLE-Data/Water-distance/cradle_hh_water_distance.csv") %>% 
+#water <- read.csv("/Users/jadebc/Library/CloudStorage/Box-Box/Jade Benjamin-Chung's Externally Shareable Files/CRADLE-Data/Water-distance/cradle_hh_water_distance.csv") %>% 
+  #mutate(dataid = as.character(dataid)) %>% 
+  #dplyr::select(dataid, dist_to_perm_water, dist_to_seasonal_water)
+
+
+water <- read.csv("/Users/suhi/Downloads/cradle_hh_water_distance.csv") %>% 
   mutate(dataid = as.character(dataid)) %>% 
   dplyr::select(dataid, dist_to_perm_water, dist_to_seasonal_water)
 
@@ -173,12 +191,21 @@ baseline <- baseline %>%
   mutate(resilient = ifelse(flood_union == 1 & depression==0, 1, 0))
 
 
+
+baseline_flood <- baseline %>% select(q21_13)
+
+
 #----------------------------------------
 # flood preparedness
 #----------------------------------------
 library(readxl)
-flood_prep <- read_excel("~/Downloads/flood_preparedness.xlsx")
+#flood_prep <- read_excel("~/Downloads/flood_preparedness.xlsx")
+
+
+flood_prep <- read_excel("/Users/suhi/Downloads/flood_preparedness_2024_07_16.xlsx")
 
 baseline <- bind_cols(baseline, flood_prep)
 
-saveRDS(baseline, paste0(here::here(), "/data/baseline_clean.RDS"))
+#saveRDS(baseline, paste0(here::here(), "/data/baseline_clean.RDS"))
+
+saveRDS(baseline, "/Users/suhi/Downloads/baseline_clean.RDS")
