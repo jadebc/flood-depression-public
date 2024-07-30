@@ -244,7 +244,7 @@ run_random_forest <- function(data, outcome, predictors) {
   
   # Train final model with best mtry and a fixed mincriterion
   final_ctrl <- cforest_unbiased(ntree = 500, mtry = best_mtry)  # You can adjust this value if needed
-  rf_model <- cforest(formula, data = data_scaled, controls = final_ctrl)
+  rf_model <- cforest(formula, data = vi_data, controls = final_ctrl)
   
   # Get variable importance
   var_importance <- varimp(rf_model)
@@ -286,7 +286,7 @@ run_random_forest <- function(data, outcome, predictors) {
   
   # Calculate OOB error
   oob_prediction <- predict(rf_model, OOB = TRUE, type = "response")
-  oob_error <- mean(oob_prediction != data_scaled[[outcome]])
+  oob_error <- mean(oob_prediction != vi_data[[outcome]])
   oob_accuracy <- 1 - oob_error
   
   return(list(
