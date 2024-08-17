@@ -16,7 +16,7 @@ tabdata <- readRDS("/Users/suhi/Downloads/baseline_clean.RDS")
 # Table 1 -----------------------------------------------------------------------------------
 
 table1 <- tabdata %>%
-  dplyr::select(mother_edu, mother_age, gestational_age, hhsize, income, flood_compound, time_since_flood_compound, 
+  dplyr::select(mother_edu, mother_age, gestational_age, hhsize, income, flood_union, flood_compound, time_since_flood_compound, 
                 inside_hh_flooded, num_days_home_flooded, latrine_flooded, num_days_latrine_flooded,
                 tubewell_flooded, num_days_tubewell_flooded, flood_prepared) %>% 
   # Create variable for income less than 12,001  
@@ -24,6 +24,12 @@ table1 <- tabdata %>%
   dplyr::select(-income) %>% 
   # Move income_less_12 after hhsize
   relocate(income_less_12, .after = hhsize)  
+
+# Convert the factor variable flood_union to numeric 
+table1 <- table1 %>%
+  mutate(flood_union = case_when(
+    flood_union == "0" ~ 0,
+    flood_union == "1" ~ 1))
 
 # Convert the factor variable flood_compound to numeric 
 table1 <- table1 %>%
@@ -50,7 +56,7 @@ comb_summary_stats <- summary_stats_N %>%
   left_join(summary_stats_Mean, by = "Variable")
 
 # Variables that should be percentages 
-perc_vars <- c("income_less_12", "flood_compound", "inside_hh_flooded", "latrine_flooded", "tubewell_flooded", "flood_prepared")
+perc_vars <- c("income_less_12", "flood_union", "flood_compound", "inside_hh_flooded", "latrine_flooded", "tubewell_flooded", "flood_prepared")
 
 # Convert Mean/% column values to percentage where applicable
 comb_summary_stats <- comb_summary_stats %>% 
@@ -59,16 +65,18 @@ comb_summary_stats <- comb_summary_stats %>%
                            sprintf("%.2f", `Mean/%`)))
 
 labels <- c(
-  "Mother's years of education", "Mother's age in years", "Gestational age in weeks", "Number of household members", "Monthly income < 12,001 taka",
+  "Mother's years of education", "Mother's age in years", "Gestational age in weeks", "Number of household members", "Monthly income < 12,001 taka", "Union flooded for at least one day in past 6 months",
   "Compound flooded for at least one day in past 6 months", "Number of months ago that the compound flooded", "Inside of the home flooded in the past 6 months", "Number of days the home was flooded",
   "Latrine flooded in past 6 months", "Number of days latrine was flooded", "Tubewell flooded in past 6 months", "Number of days the tubewell was flooded", "Respondent feels prepared to handle a flood if it happened tomorrow"
 )
 
 comb_summary_stats <- comb_summary_stats %>%
   mutate(Label = labels) %>% 
-  relocate(Label, .after = Variable)
+  relocate(Label, .after = Variable) %>% 
+  dplyr::select(-Variable)
 
-write.csv(comb_summary_stats, "/Users/suhi/Downloads/table1_flood_dep.csv", row.names = FALSE)
+write.csv(comb_summary_stats, file = paste0(table_path, "table1_flood_dep.csv"), row.names = FALSE)
+#write.csv(comb_summary_stats, "/Users/suhi/Downloads/table1_flood_dep.csv", row.names = FALSE)
 
 
 
@@ -259,32 +267,41 @@ tab2_lab <- c(
 
 tab2_perc <- tab2_perc %>%
   mutate(Label = tab2_lab) %>% 
-  relocate(Label, .after = Variable)
+  relocate(Label, .after = Variable) %>% 
+  dplyr::select(-Variable)
 
-write.csv(tab2_perc, "/Users/suhi/Downloads/table2_flood_dep.csv", row.names = FALSE)
+write.csv(tab2_perc, file= paste0(table_path, "tab2_flood_dep.csv"), row.names = FALSE)
+#write.csv(tab2_perc, "/Users/suhi/Downloads/table2_flood_dep.csv", row.names = FALSE)
 
 # Table 3 -----------------------------------------------------------------------------------
 
-reg_unadj <- readRDS("/Users/suhi/Downloads/flooding_regression_results_unadj.RDS") %>% 
-#reg_unadj <- readRDS(paste0(here::here(), "/data/flooding_regression_results_adj.RDS"))
+# reg_unadj <- readRDS("/Users/suhi/Downloads/flooding_regression_results_unadj.RDS") %>% 
+#   dplyr::select(-covariates, -model, -parameter_type) 
+
+reg_unadj <- readRDS(paste0(data_dir, "flooding_regression_results_adj.RDS")) %>% 
   dplyr::select(-covariates, -model, -parameter_type) 
 
-reg_adj <- readRDS("/Users/suhi/Downloads/flooding_regression_results_adj.RDS") %>% 
-#reg_adj <- readRDS(paste0(here::here(), "/data/flooding_regression_results_adj.RDS"))
+# reg_adj <- readRDS("/Users/suhi/Downloads/flooding_regression_results_adj.RDS") %>%
+#   filter(label == "latrine_flooded" | label == "flood_compound" | label == "flood_union") %>% 
+#   dplyr::select(outcome, label, pt_estimate, CI_lower, CI_upper) %>% 
+#   rename(pt_estimate_adj = pt_estimate, CI_lower_adj = CI_lower, CI_upper_adj = CI_upper)
+  
+reg_adj <- readRDS(paste0(data_dir, "flooding_regression_results_adj.RDS")) %>% 
   filter(label == "latrine_flooded" | label == "flood_compound" | label == "flood_union") %>% 
   dplyr::select(outcome, label, pt_estimate, CI_lower, CI_upper) %>% 
   rename(pt_estimate_adj = pt_estimate, CI_lower_adj = CI_lower, CI_upper_adj = CI_upper)
 
 reg <- reg_unadj %>% left_join(reg_adj, by = c("outcome", "label")) %>%
-  mutate(CI = sprintf("%f (%f, %f)", pt_estimate, CI_lower, CI_upper),
-      CI_adj = sprintf("%f (%f, %f)", pt_estimate_adj, CI_lower_adj, CI_upper_adj)) %>%
-      dplyr::select(-pt_estimate, -CI_lower, -CI_upper, -pt_estimate_adj, -CI_lower_adj, -CI_upper_adj)
+  mutate(CI = sprintf("%.2f (%.2f, %.2f)", pt_estimate, CI_lower, CI_upper),
+      CI_adj = sprintf("%.2f (%.2f, %.2f)", pt_estimate_adj, CI_lower_adj, CI_upper_adj)) %>% 
+      dplyr::select(-pt_estimate, -CI_lower, -CI_upper, -pt_estimate_adj, -CI_lower_adj, -CI_upper_adj) %>% 
+  filter(label == "latrine_flooded" | label == "flood_compound" | label == "flood_union") 
 
-mean <- readRDS("/Users/suhi/Downloads/flooding_mean_results.RDS")
-#mean_uneexp <- readRDS(paste0(here::here(), "/data/flooding_mean_unexposed_results.RDS"))
+mean <- readRDS(paste0(data_dir, "flooding_mean_results.RDS"))
+#mean <- readRDS("/Users/suhi/Downloads/flooding_mean_results.RDS")
 
 reg <- reg %>%
-  left_join(mean, by = c("outcome", "label"))
+  left_join(mean, by = c("outcome", "label")) 
 
 tab3 <- reg %>% 
   filter(outcome != "EPDS") %>% 
@@ -294,12 +311,16 @@ tab3 <- reg %>%
   relocate(mean_unexposed, .after = mean_exposed) %>% 
   rename("Prevalence among exposed" = mean_exposed, "Prevalence among unexposed" = mean_unexposed,
          "Crude prevalence ratio (95% CI)" = CI, "Adjusted * prevalence ratio (95% CI)" = CI_adj) %>% 
-  mutate(Variable = c("Flooded latrine", "Flooded compound", "Flooded union",
-                      "Flooded latrine", "Flooded compound", "Flooded union")) %>% 
-  relocate(Variable, .after = outcome) %>% 
-  dplyr::select(-label)
+  mutate(Flooding = c("Flooded latrine", "Flooded compound", "Flooded union",
+                      "Flooded latrine", "Flooded compound", "Flooded union"),
+         Outcome = c("Moderate or severe depression","Moderate or severe depression", "Moderate or severe depression",
+                     "Severe depression", "Severe depression", "Severe depression")) %>% 
+  relocate(Flooding, .after = outcome) %>% 
+  relocate(Outcome, .after = outcome) %>% 
+  dplyr::select(-label, - outcome)
   
-write.csv(tab3, "/Users/suhi/Downloads/table3_flood_dep.csv", row.names = FALSE)
+write.csv(tab3, file = paste0(table_path, "table3_flood_dep.csv"), row.names = FALSE)
+#write.csv(tab3, "/Users/suhi/Downloads/table3_flood_dep.csv", row.names = FALSE)
 
 # Table 4 -----------------------------------------------------------------------------------  
 
@@ -307,18 +328,25 @@ tab4 <- reg %>%
   filter(outcome == "EPDS") %>% 
   relocate(mean_exposed, .after = N) %>% 
   relocate(mean_unexposed, .after = mean_exposed) %>% 
+  mutate(mean_exposed = sprintf("%.2f", mean_exposed),
+         mean_unexposed = sprintf("%.2f", mean_unexposed)) %>% 
   rename("Mean among exposed" = mean_exposed, "Mean among unexposed" = mean_unexposed,
          "Crude mean difference (95% CI)" = CI, "Adjusted * mean difference (95% CI)" = CI_adj) %>% 
   mutate(Variable = c("Flooded latrine", "Flooded compound", "Flooded union")) %>% 
   relocate(Variable, .before = N) %>% 
   dplyr::select(-outcome, -label)
 
-write.csv(tab4, "/Users/suhi/Downloads/table4_flood_dep.csv", row.names = FALSE)
+write.csv(tab4, file = paste0(table_path, "table4_flood_dep.csv"), row.names = FALSE)
+#write.csv(tab4, "/Users/suhi/Downloads/table4_flood_dep.csv", row.names = FALSE)
 
 # Table 5 -----------------------------------------------------------------------------------  
 
-tab5 <- readRDS("/Users/suhi/Downloads/epds_individual_regression_results.RDS") %>% 
-  mutate("Adjusted prevalence ratio (95% CI)" = sprintf("%f (%f, %f)", pt_estimate, CI_lower, CI_upper)) %>% 
+#tab5 <- readRDS("/Users/suhi/Downloads/epds_individual_regression_results.RDS")
+tab5 <- readRDS(paste0(data_dir,"epds_individual_regression_results.RDS"))
+
+tab5 <- tab5 %>% 
+  filter(label == "flood_compound") %>% 
+  mutate("Adjusted prevalence ratio (95% CI)" = sprintf("%.2f (%.2f, %.2f)", pt_estimate, CI_lower, CI_upper)) %>% 
   mutate("Prevalence among exposed" = sprintf("%.2f%%", mean_exposed * 100),
          "Prevalence among unexposed" = sprintf("%.2f%%", mean_unexposed * 100)) %>% 
   mutate(Variable = c("Difficult to see funny side of things",
@@ -334,5 +362,6 @@ tab5 <- readRDS("/Users/suhi/Downloads/epds_individual_regression_results.RDS") 
                       )) %>% 
   dplyr::select(Variable, "Prevalence among exposed", "Prevalence among unexposed",
                 "Adjusted prevalence ratio (95% CI)")
-  
-write.csv(tab5, "/Users/suhi/Downloads/table5_flood_dep.csv", row.names = FALSE)
+
+#write.csv(tab5, "/Users/suhi/Downloads/table5_flood_dep.csv", row.names = FALSE)  
+write.csv(tab5, file = paste0(table_path, "table5_flood_dep.csv"), row.names = FALSE)
