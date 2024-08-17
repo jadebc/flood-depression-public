@@ -19,14 +19,15 @@ library(pracma)
 library(dplyr)
 # library(matrixStats)
 library(haven)
+library(readstata13)
 
 
 # # find study area boundaries 
-bgd_adm4_shp <- st_read("/Users/suhi/downloads/bgd_shp_files/bgd_admbnda_adm4_bbs_20201113.shp") %>% 
-  filter(ADM2_EN == "Sirajganj" | ADM2_EN == "Tangail")
+# bgd_adm4_shp <- st_read("/Users/suhi/downloads/bgd_shp_files/bgd_admbnda_adm4_bbs_20201113.shp") %>% 
+#   filter(ADM2_EN == "Sirajganj" | ADM2_EN == "Tangail")
 
-#bgd_adm4_shp <- st_read(paste0(box_shapefile_path, "bgd_shp_files/bgd_admbnda_adm4_bbs_20201113.shp")) %>% 
-#  filter(ADM2_EN == "Sirajganj" | ADM2_EN == "Tangail")
+bgd_adm4_shp <- st_read(paste0(box_shapefile_path, "bgd_shp_files/bgd_admbnda_adm4_bbs_20201113.shp")) %>%
+ filter(ADM2_EN == "Sirajganj" | ADM2_EN == "Tangail")
 
 coords <- as.data.frame(st_coordinates(bgd_adm4_shp))
 
@@ -36,9 +37,8 @@ max(coords$Y) # 24.78787
 min(coords$Y) # 23.96359
 
 # # read in seasonality raster for Bangladesh
-seasonality_raster = terra::rast("/Users/suhi/Downloads/seasonality_raw.tif") # data resolution 29.48906m * 29.48906m
-
-# seasonality_raster = terra::rast(paste0(box_shapefile_path, "seasonality_raw.tif"))
+#seasonality_raster = terra::rast("/Users/suhi/Downloads/seasonality_raw.tif") # data resolution 29.48906m * 29.48906m
+seasonality_raster = terra::rast(paste0(box_shapefile_path, "seasonality_raw.tif"))
 
 ## crop seasonality raster to study area
 crop_extent <- extent(88, 92, 22, 26)
@@ -58,46 +58,45 @@ seasonal_raster = seasonality_raster
 permanent_raster = seasonality_raster
 permanent_raster[permanent_raster < 12] <- 0
 seasonal_raster[seasonal_raster > 6] <- 0
-# 
-writeRaster(permanent_raster, "/Users/suhi/Downloads/permanent_raster_epsg.tif", 
-                                      filetype="GTiff", overwrite=TRUE)
 
-writeRaster(seasonal_raster, "/Users/suhi/Downloads/seasonal_raster_epsg.tif", 
-            filetype="GTiff", overwrite=TRUE)
+# writeRaster(permanent_raster, "/Users/suhi/Downloads/permanent_raster_epsg.tif", 
+#                                       filetype="GTiff", overwrite=TRUE)
 
-#writeRaster(permanent_raster, paste0(box_shapefile_path, "rasters/permanent_raster_epsg.tif"), 
-#            filetype="GTiff", overwrite=TRUE)
+# writeRaster(seasonal_raster, "/Users/suhi/Downloads/seasonal_raster_epsg.tif", 
+#             filetype="GTiff", overwrite=TRUE)
 
-#writeRaster(seasonal_raster, paste0(box_shapefile_path, "rasters/seasonal_raster_epsg.tif"), 
-#            filetype="GTiff", overwrite=TRUE)
+writeRaster(permanent_raster, paste0(box_shapefile_path, "rasters/permanent_raster_epsg.tif"),
+           filetype="GTiff", overwrite=TRUE)
+
+writeRaster(seasonal_raster, paste0(box_shapefile_path, "rasters/seasonal_raster_epsg.tif"),
+           filetype="GTiff", overwrite=TRUE)
 
 
-perm_raster <- rast("/Users/suhi/Downloads/permanent_raster_epsg.tif")
-seasonal_raster <- rast("/Users/suhi/Downloads/seasonal_raster_epsg.tif")
+# perm_raster <- rast("/Users/suhi/Downloads/permanent_raster_epsg.tif")
+# seasonal_raster <- rast("/Users/suhi/Downloads/seasonal_raster_epsg.tif")
 
-#perm_raster <- rast(paste0(box_shapefile_path, "rasters/permanent_raster_epsg.tif"))
-#seasonal_raster <- rast(paste0(box_shapefile_path, "rasters/seasonal_raster_epsg.tif"))
+perm_raster <- rast(paste0(box_shapefile_path, "rasters/permanent_raster_epsg.tif"))
+seasonal_raster <- rast(paste0(box_shapefile_path, "rasters/seasonal_raster_epsg.tif"))
 
-#seasonal_points = as.points(seasonal_raster)
-#seasonal_sppoints = SpatialPoints(raster_points[, 1:2], proj4string=CRS('+proj=longlat +datum=WGS84'))
+# seasonal_points = as.points(seasonal_raster)
+# seasonal_sppoints = SpatialPoints(raster_points[, 1:2], proj4string=CRS('+proj=longlat +datum=WGS84'))
 
 
 ###########################################################
 ########### Detect Proportion of Surface Water ############
 ###########################################################
 
-ll <- read_dta("/Users/suhi/Downloads/CRADLE_Baseline_data.dta") %>% 
-  dplyr::select(dataid, gpslatitudedegrees, gpslongitudedegrees, q1_3) %>% 
-  rename(hhcode = dataid, lat = gpslatitudedegrees, long = gpslongitudedegrees, union = q1_3)
+# ll <- read.dta13("/Users/suhi/Downloads/CRADLE_Baseline_data.dta", convert.factors=F) %>%
+#   dplyr::select(dataid, gpslatitudedegrees, gpslongitudedegrees, q1_3) %>%
+#   rename(hhcode = dataid, lat = gpslatitudedegrees, long = gpslongitudedegrees, union = q1_3)
 
+ll <- read.dta13(paste0(box_path_cradle_data,"Baseline/CRADLE_Baseline_data.dta"), convert.factors=F) %>%
+  dplyr::select(dataid, gpslatitudedegrees, gpslongitudedegrees, q1_3) %>%
+  rename(hhcode = dataid, lat = gpslatitudedegrees, long = gpslongitudedegrees, union = q1_3)
 
 # Store original coordinates
 ll <- ll %>%
   mutate(orig_long = long, orig_lat = lat)
-
-
-
-
 
 detect_water_proportion <- function(ll_row, radii, water_type, water_raster) {
   lon <- as.numeric(ll_row["orig_long"])
@@ -115,7 +114,6 @@ detect_water_proportion <- function(ll_row, radii, water_type, water_raster) {
   # Include original coordinates in the output
   this_row <- data.frame(hhcode = hhcode, union = union, orig_long = lon, orig_lat = lat)
   #print(this_row)
-  
   
   for (radius in radii) {
     buffer <- buffer(point, width = radius)
@@ -149,7 +147,6 @@ detect_water_proportion <- function(ll_row, radii, water_type, water_raster) {
   return(this_row)
 }
 
-
 num_hh <- length(ll$orig_long)
 radii <- c(10, 25, 50, 75, 100, 250, 500, 1000)
 perm_water_df <- map_dfr(1:num_hh, 
@@ -164,8 +161,11 @@ seasonal_water_df <- map_dfr(1:num_hh,
                                                        water_type = "seasonal",
                                                        water_raster = seasonal_raster))
 
-sw_df <- left_join(perm_water_df, seasonal_water_df, by = c("union", "hhcode"))
+sw_df <- left_join(perm_water_df, seasonal_water_df, by = c("union", "hhcode")) %>% 
+  dplyr::select(hhcode, union, starts_with("prop_")) %>% 
+  rename(dataid = hhcode)
 
-saveRDS(sw_df, "/Users/suhi/Downloads/analysis_prop_surface_water.RDS")
-#saveRDS(sw_df, paste0(data_dir, "analysis_prop_surface_water.RDS"))
+#saveRDS(sw_df, "/Users/suhi/Downloads/analysis_prop_surface_water.RDS")
+saveRDS(sw_df, paste0(data_dir, "analysis_prop_surface_water.RDS"))
+
 
