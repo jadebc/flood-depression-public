@@ -9,6 +9,9 @@ source(paste0(here::here(), '/0-config.R'))
 
 tabdata <- readRDS("/Users/suhi/Downloads/baseline_clean.RDS")
 
+# test = tabdata %>% dplyr::select(depression, depression_severe)
+# sum(test$depression) #164
+# sum(test$depression_severe) #63
 
 # Table 1 -----------------------------------------------------------------------------------
 

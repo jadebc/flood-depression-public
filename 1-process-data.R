@@ -2,7 +2,22 @@
 rm(list=ls())
 #install.packages("psych")
 library(lubridate)
+library(readxl)
 library(readstata13)
+
+
+library(tidyverse)
+library(here)
+library(ggplot2)
+library(gridExtra)
+library(reshape2)
+library(viridis)
+library(RColorBrewer)
+library(gridExtra)
+library(assertthat)
+library(boxr)
+library(writexl)
+
 source(paste0(here::here(), '/0-config.R'))
 
 #baseline_raw=read.dta13("/Users/jadebc/Library/CloudStorage/Box-Box/Jade Benjamin-Chung's Externally Shareable Files/CRADLE-Data/Baseline/CRADLE_Baseline_data.dta", convert.factors=F)
@@ -198,14 +213,31 @@ baseline_flood <- baseline %>% select(q21_13)
 #----------------------------------------
 # flood preparedness
 #----------------------------------------
-library(readxl)
 #flood_prep <- read_excel("~/Downloads/flood_preparedness.xlsx")
 
 
-flood_prep <- read_excel("/Users/suhi/Downloads/flood_preparedness_2024_07_16.xlsx")
+flood_prep <- read_excel("/Users/suhi/Downloads/flood_preparedness_2024_08_16.xlsx")
 
 baseline <- bind_cols(baseline, flood_prep)
 
 #saveRDS(baseline, paste0(here::here(), "/data/baseline_clean.RDS"))
+
+#----------------------------------------
+# percent of surface water 
+#----------------------------------------
+
+sw_df <- readRDS("/Users/suhi/Downloads/analysis_prop_surface_water.RDS")
+#sw_df <- readRDS(paste0(here::here(), "/data/analysis_prop_surface_water.RDS"))
+
+baseline <- bind_cols(baseline, sw_df)
+
+#----------------------------------------
+# distance to surface water 
+#----------------------------------------
+
+sw_distance <- readRDS("/Users/suhi/Downloads/analysis_water_distance.RDS")
+#sw_distance <- readRDS(paste0(here::here(), "/data/analysis_water_distance.RDS"))
+
+baseline <- bind_cols(baseline, sw_distance) 
 
 saveRDS(baseline, "/Users/suhi/Downloads/baseline_clean.RDS")

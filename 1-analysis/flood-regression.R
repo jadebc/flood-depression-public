@@ -31,7 +31,7 @@ process_variable <- function(variable) {
   # 1 if value is 1,2 or 3, 0 otherwise, NA if NA
   d <<- d %>%
     mutate(!!binary_col := case_when(
-      get(variable) %in% c(1, 2, 3) ~ 1,
+      get(variable) %in% c(2, 3) ~ 1,
       is.na(get(variable)) ~ NA_real_,
       TRUE ~ 0
     ))
@@ -46,6 +46,7 @@ process_variable <- function(variable) {
   
 
   res <- fit_glm(data = d, Y_name = binary_col, A_name = "flood_compound",
+                 covariates = c("mother_age", "month"),
                     family = "binomial")
   
   # store regression results 
@@ -308,4 +309,6 @@ means <- data.frame(
 saveRDS(means, "/Users/suhi/Downloads/flooding_mean_results.RDS")
 #saveRDS(means, paste0(here::here(), "/data/flooding_mean_results.RDS"))
 
+
+# EPDS and distance to surface water association -----------------------------------
 
