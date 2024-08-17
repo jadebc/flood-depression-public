@@ -8,8 +8,10 @@ source(paste0(here::here(), '/0-config.R'))
 library(sp)
 library(sf)
 library(leaflet)
+library(htmlwidgets)
 
 baseline = readRDS(paste0(data_dir, "baseline_clean.RDS"))
+#baseline = readRDS("/Users/suhi/Downloads/baseline_clean.RDS")
 
 baseline <- baseline %>% mutate(
   flood_cat = as.factor(case_when(
@@ -46,7 +48,10 @@ baseline_flooded_SPDF <- SpatialPointsDataFrame(
 
 
 # Read in Sirajganj district shapefile -------------------------------------
-bgd_adm4_shp <- st_read(paste0(box_shapefile_path, "bgd_shp_files/bgd_admbnda_adm4_bbs_20201113.shp"))%>% 
+# bgd_adm4_shp <- st_read(paste0(box_shapefile_path, "bgd_shp_files/bgd_admbnda_adm4_bbs_20201113.shp"))%>% 
+#   filter(ADM2_EN == "Sirajganj" | ADM2_EN == "Tangail")
+
+bgd_adm4_shp <- st_read("/Users/suhi/Downloads/bgd_shp_files/bgd_admbnda_adm4_bbs_20201113.shp")%>% 
   filter(ADM2_EN == "Sirajganj" | ADM2_EN == "Tangail")
 
 # center for each union
@@ -85,7 +90,7 @@ map_perm_water <- leaflet(baseline_SPDF,
                  color = ~dist_perm_palette(dist_to_perm_water),
                  weight = 3.0,
                  fillOpacity = 1,
-                 radius = 2.6) %>%
+                 radius = 0.5) %>%
 
   addLegend("bottomright",
             pal = dist_perm_palette,
@@ -93,6 +98,9 @@ map_perm_water <- leaflet(baseline_SPDF,
             title = "km",
             opacity = 1
   )
+
+# save map as html file
+saveWidget(map_perm_water, file = paste0(figure_path, "map_perm_water.html"), selfcontained = TRUE)
 
 
 # Map of seasonal water -------------------------------------
@@ -109,7 +117,7 @@ map_seas_water <- leaflet(baseline_SPDF,
                    color = ~dist_seas_palette(dist_to_seasonal_water),
                    weight = 3.0,
                    fillOpacity = 1,
-                   radius = 2.6) %>%
+                   radius = 0.5) %>%
   
   addLegend("bottomright",
             pal = dist_seas_palette,
@@ -118,7 +126,8 @@ map_seas_water <- leaflet(baseline_SPDF,
             opacity = 1
   )
 
-map_seas_water
+# save map as html file
+saveWidget(map_seas_water, file = paste0(figure_path, "map_seas_water.html"), selfcontained = TRUE)
 
 # Map of flooding -------------------------------------
 map_flood_points <- leaflet(baseline_flooded_SPDF,
@@ -134,17 +143,17 @@ map_flood_points <- leaflet(baseline_flooded_SPDF,
                    color = ~flood_palette(flood_cat),
                    weight = 3.0,
                    fillOpacity = 0.7,
-                   radius = 2.6) %>%
+                   radius = 0.5) %>%
   
   addLegend("bottomright",
             pal = flood_palette,
             values = ~baseline_flooded_SPDF$flood_cat,
-            title = "km",
+            title = "Flooding",
             opacity = 1
   )
 
-map_flood_points
-
+# save map as html file
+saveWidget(map_flood_points, file = paste0(figure_path, "map_flood_points.html"), selfcontained = TRUE)
 
 
 # Map of depression -------------------------------------
@@ -160,7 +169,7 @@ map_depression <- leaflet(baseline_SPDF,
                    color = ~EPDS_palette(EPDS),
                    weight = 3.0,
                    fillOpacity = 1,
-                   radius = 2.6) %>%
+                   radius = 0.5) %>%
   
   addLegend("bottomright", 
             pal = EPDS_palette, 
@@ -169,8 +178,10 @@ map_depression <- leaflet(baseline_SPDF,
             opacity = 1
   )
 
+# save map as html file
+saveWidget(map_depression, file = paste0(figure_path, "map_depression.html"), selfcontained = TRUE)
 
-map_depression
+
 
 
 
