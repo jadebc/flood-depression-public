@@ -8,13 +8,13 @@ library(lubridate)
 library(readstata13)
 source(paste0(here::here(), '/0-config.R'))
 
+#d = readRDS(paste0(data_dir, "/baseline_clean.RDS"))
 
 d <- readRDS("/Users/suhi/Downloads/baseline_clean.RDS")
-#d = readRDS(paste0(here::here(), "/data/baseline_clean.RDS"))
 
 
 # covariates for regression
-covariates <- c("month", "wealth_index", "mother_edu", "mother_age", "gestational_age")
+covariates <- c("month", "wealth_index", "mother_edu", "mother_age", "gestational_age", "dist_to_any_water")
 
 # EPDS individual components and flooding in the compound association -----------------------------------
 
@@ -75,7 +75,7 @@ epds_components_reg <- bind_rows(regression_results) %>%
   left_join(means_unexposed_epds_comp, by = "outcome")
 
 saveRDS(epds_components_reg, "/Users/suhi/Downloads/epds_individual_regression_results.RDS")
-#saveRDS(epds_components_reg, paste0(here::here(), "/data/epds_individual_regression_results.RDS"))
+#saveRDS(epds_components_reg, paste0(data_dir, "epds_individual_regression_results.RDS"))
 
 # flooding in the latrine -----------------------------------------------
 
@@ -150,6 +150,20 @@ res_dep_floodc_unadj <- fit_glm(data=d, Y_name="depression", A_name="flood_compo
 res_dep_floodc_adj <- fit_glm(data=d, Y_name="depression", A_name="flood_compound",
                                covariates=covariates, family = "binomial")
 
+## severe depression -------------
+# prevalence in exposed, unexposed
+mean(d$depression_severe[d$flood_compound==1])
+mean(d$depression_severe[d$flood_compound==0])
+
+# unadjusted PR
+res_sdep_floodc_unadj <- fit_glm(data=d, Y_name="depression_severe", A_name="flood_compound",
+                                family = "binomial")
+
+# adjusted PR
+res_sdep_floodc_adj <- fit_glm(data=d, Y_name="depression_severe", A_name="flood_compound",
+                              covariates=covariates, family = "binomial")
+
+
 
 ## severe depression -------------
 # prevalence in exposed, unexposed
@@ -199,12 +213,11 @@ mean_dep_sev_floodu_unexposed <- mean(d$depression_severe[d$flood_union==0], na.
 
 # unadjusted PR
 res_dep_sev_floodu_unadj <- fit_glm(data=d, Y_name="depression_severe", A_name="flood_union",
-                                family = "binomial")
+                                    family = "binomial")
 
 # adjusted PR
 res_dep_sev_floodu_adj <- fit_glm(data=d, Y_name="depression_severe", A_name="flood_union",
-                              covariates=covariates, family = "binomial")
-
+                                  covariates=covariates, family = "binomial")
 
 # combine and save results ------------------------------------------------
 # save regression results
@@ -224,9 +237,8 @@ res_unadj <- data.frame(
 )
 
 
-
 saveRDS(res_unadj, "/Users/suhi/Downloads/flooding_regression_results_unadj.RDS")
-#saveRDS(res_unadj, paste0(here::here(), "/data/flooding_regression_results_unadj.RDS"))
+#saveRDS(res_unadj, paste0(data_dir, "flooding_regression_results_unadj.RDS"))
 
 # adjusted
 res_adj <- data.frame(
@@ -241,11 +253,11 @@ res_adj <- data.frame(
             res_epds_floodl_adj,
             res_epds_floodc_adj,
             res_epds_floodu_adj
-            )
+  )
 )
 
 saveRDS(res_adj, "/Users/suhi/Downloads/flooding_regression_results_adj.RDS")
-#saveRDS(res_adj, paste0(here::here(), "/data/flooding_regression_results_adj.RDS"))
+#saveRDS(res_adj, paste0(data_dir, "flooding_regression_results_adj.RDS"))
 
 # save means
 
@@ -279,77 +291,32 @@ means <- data.frame(
   ),
   
   mean_unexposed = c(mean_dep_floodl_unexposed,
-           mean_dep_floodc_unexposed,
-           mean_dep_floodu_unexposed,
-           
-           
-           mean_dep_sev_floodl_unexposed,
-           mean_dep_sev_floodc_unexposed,
-           mean_dep_sev_floodu_unexposed,
-           
-           mean_epds_floodl_unexposed,
-           mean_epds_floodc_unexposed,
-           mean_epds_floodu_unexposed
+                     mean_dep_floodc_unexposed,
+                     mean_dep_floodu_unexposed,
+                     
+                     
+                     mean_dep_sev_floodl_unexposed,
+                     mean_dep_sev_floodc_unexposed,
+                     mean_dep_sev_floodu_unexposed,
+                     
+                     mean_epds_floodl_unexposed,
+                     mean_epds_floodc_unexposed,
+                     mean_epds_floodu_unexposed
   ),
   
   
   mean_exposed = c(mean_dep_floodl_exposed,
-           mean_dep_floodc_exposed,
-           mean_dep_floodu_exposed,
-           
-           mean_dep_sev_floodl_exposed,
-           mean_dep_sev_floodc_exposed,
-           mean_dep_sev_floodu_exposed,
-           
-           mean_epds_floodl_exposed,
-           mean_epds_floodc_exposed,
-           mean_epds_floodu_exposed))
+                   mean_dep_floodc_exposed,
+                   mean_dep_floodu_exposed,
+                   
+                   mean_dep_sev_floodl_exposed,
+                   mean_dep_sev_floodc_exposed,
+                   mean_dep_sev_floodu_exposed,
+                   
+                   mean_epds_floodl_exposed,
+                   mean_epds_floodc_exposed,
+                   mean_epds_floodu_exposed))
 
 
 saveRDS(means, "/Users/suhi/Downloads/flooding_mean_results.RDS")
-#saveRDS(means, paste0(here::here(), "/data/flooding_mean_results.RDS"))
-
-
-# EPDS and distance to surface water association -----------------------------------
-
-## EPDS -------------
-# mean in exposed, unexposed
-mean_epds_floodc_exposed <- mean(d$EPDS[d$flood_compound==1])
-mean_epds_floodc_unexposed <- mean(d$EPDS[d$flood_compound==0])
-
-# unadjusted mean difference
-res_epds_floodc_unadj <- fit_glm(data=d, Y_name="EPDS", A_name="flood_compound")
-
-# adjusted mean difference
-res_epds_floodc_adj <- fit_glm(data=d, Y_name="EPDS", A_name="flood_compound",
-                               covariates=covariates)
-
-## depression -------------
-# prevalence in exposed, unexposed
-mean_dep_floodc_exposed <- mean(d$depression[d$flood_compound==1])
-mean_dep_floodc_unexposed <- mean(d$depression[d$flood_compound==0])
-
-
-# unadjusted PR moderate to severe depression
-res_dep_floodc_unadj <- fit_glm(data=d, Y_name="depression", A_name="flood_compound",
-                                family = "binomial")
-
-# adjusted PR moderate to severe depression
-res_dep_floodc_adj <- fit_glm(data=d, Y_name="depression", A_name="flood_compound",
-                              covariates=covariates, family = "binomial")
-
-
-## severe depression -------------
-# prevalence in exposed, unexposed
-mean_dep_sev_floodc_exposed <- mean(d$depression_severe[d$flood_compound==1])
-mean_dep_sev_floodc_unexposed <- mean(d$depression_severe[d$flood_compound==0])
-
-# unadjusted PR severe depression
-res_dep_sev_floodc_unadj <- fit_glm(data=d, Y_name="depression_severe", A_name="flood_compound",
-                                    family = "binomial")
-
-# adjusted PR severe depression
-res_dep_sev_floodc_adj <- fit_glm(data=d, Y_name="depression_severe", A_name="flood_compound",
-                                  covariates=covariates, family = "binomial")
-
-
+#saveRDS(means, paste0(data_dir, "flooding_mean_results.RDS"))

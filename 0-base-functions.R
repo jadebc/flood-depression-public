@@ -23,7 +23,8 @@
 screen_covariates <- function (Y, Ws, family = "gaussian", pval = 0.2, print = TRUE){
   require(lmtest)
   Ws <- as.data.frame(Ws)
-  dat <- data.frame(Ws, Y)
+  dat <- bind_cols(Y, Ws)
+  colnames(dat)[1] = "Y"
   dat <- dat[complete.cases(dat), ]
   nW <- ncol(Ws)
   LRp <- matrix(rep(NA, nW), nrow = nW, ncol = 1)
@@ -81,16 +82,20 @@ screen_covariates <- function (Y, Ws, family = "gaussian", pval = 0.2, print = T
 fit_glm <- function(data, Y_name, A_name, family = "gaussian", covariates = NULL){
   Y <- data[,Y_name]
   
-  if(family=="binomial") Y <- as.factor(Y)
+  if(family!="gaussian") Y <- as.factor(Y)
     
   if(!is.null(covariates)){
     # covariate screening
-    covs <- screen_covariates(Y, data[,covariates], family = family)
-    cormatrix <- cor(data[,c(covs)])
+    Ws <- data %>% dplyr::select(all_of(covariates))
+    screen_family = ifelse(family=="gaussian","gaussian","binomial")
+    covs <- screen_covariates(Y, Ws, family = screen_family)
+    if(length(covs)>1){
+      # check for collinearity
+      cormatrix <- cor(data[,c(covs)])
+      diag(cormatrix) <- 0
+      assert_that(max(cormatrix) <= 0.6 , msg="Covariates are highly correlated")
+    } 
     
-    # check for collinearity
-    diag(cormatrix) <- 0
-    assert_that(max(cormatrix) <= 0.6 , msg="Covariates are highly correlated")
   }
 
   # fit glm
@@ -116,6 +121,7 @@ fit_glm <- function(data, Y_name, A_name, family = "gaussian", covariates = NULL
   } 
   
   estimates <- estimates %>% mutate(parameter_type = ifelse(family=="binomial","odds ratio","mean difference"))
+  estimates <- estimates %>% mutate(parameter_type = ifelse(family=="poisson","prevalence ratio","mean difference"))
   
   estimates <- estimates %>% mutate(label = rownames(estimates),
                                     outcome = Y_name)
@@ -148,7 +154,7 @@ get_estimate <- function(model){
   if(family(model)$family =="gaussian"){
     out = cbind(pt_estimate = coef(model), confint(model))
   }
-  if(family(model)$family =="binomial"){
+  if(family(model)$family %in% c("binomial", "poisson")){
     out = exp(cbind(pt_estimate = coef(model), confint(model)))
   }
   # remove intercept
@@ -159,4 +165,138 @@ get_estimate <- function(model){
   out = cbind(N = nobs(model), out)
   
   return(out)
+}
+
+
+##############################################
+##############################################
+# Documentation: run_random_forest
+# Usage: run_random_forest(data, outcome, predictors)
+# Description: Runs a random forest model using cforest with preprocessing, hyperparameter tuning, and variable importance analysis
+#
+# Args/Options:
+# data: a data frame containing the outcome and predictor variables
+# outcome: a string specifying the name of the outcome variable
+# predictors: a vector of strings specifying the names of the predictor variables
+#
+# Returns: a list containing:
+#   - rf_model: the final random forest model (cforest object)
+#   - tuned_model: the tuned model object from caret
+#   - best_mtry: the best mtry value found during tuning
+#   - oob_error: out-of-bag error rate
+#   - oob_accuracy: out-of-bag accuracy
+#   - var_importance_sorted: data frame of sorted variable importance with categories
+#   - top_vars: vector of variables in the top 25% of importance
+#
+# Output: 
+#   - prints the best mtry value
+#   - prints the sorted variable importance
+#
+# Note: This function uses the cforest method from the party package and tunes only the mtry parameter.
+#       Binary variables are converted to factors, and numeric variables are standardized.
+##############################################
+##############################################
+
+run_random_forest <- function(data, outcome, predictors) {
+  library(party)
+  library(caret)
+  
+  # Restrict to necessary columns and complete cases
+  vi_data <- data %>% dplyr::select(all_of(c(outcome, predictors))) 
+  vi_data <- vi_data[complete.cases(vi_data),]
+  
+  # Recode binary variables as factors
+  binary_vars <- colnames(vi_data)[apply(vi_data, 2, function(x) length(unique(x))==2)]
+  convert_binary <- function(x) {
+    as.factor(ifelse(x == 0, "no", "yes"))
+  }
+  vi_data <- vi_data %>% mutate_at(binary_vars, convert_binary)
+  
+  # Create a formula for modeling
+  formula <- as.formula(paste(outcome, "~", paste(predictors, collapse = " + ")))
+  
+  # Set up cross-validation
+  ctrl <- trainControl(
+    method = "cv",
+    number = 10,
+    classProbs = TRUE,
+    summaryFunction = twoClassSummary
+  )
+  
+  # Tune mtry
+  set.seed(123)  # for reproducibility
+  mtry_grid <- expand.grid(mtry = seq(2, length(predictors), by = 2))
+  
+  tuned_model <- train(
+    formula,
+    data = vi_data,
+    method = "cforest",
+    trControl = ctrl,
+    tuneGrid = mtry_grid,
+    controls = cforest_unbiased(ntree = 500),
+    metric = "ROC"
+  )
+  
+  best_mtry <- tuned_model$bestTune$mtry
+  
+  # Print best mtry
+  cat("Best mtry:", best_mtry, "\n")
+  
+  # Train final model with best mtry and a fixed mincriterion
+  final_ctrl <- cforest_unbiased(ntree = 500, mtry = best_mtry)  # You can adjust this value if needed
+  rf_model <- cforest(formula, data = vi_data, controls = final_ctrl)
+  
+  # Get variable importance
+  var_importance <- varimp(rf_model)
+  
+  # Sort importance and convert to dataframe
+  var_importance_sorted <- data.frame(
+    variable = names(var_importance),
+    importance = var_importance
+  ) %>%
+    arrange(desc(importance))
+  
+  # Print sorted importance
+  print(var_importance_sorted)
+  
+  # Add variable categories
+  var_importance_sorted <- var_importance_sorted %>% mutate(
+    var_cat = case_when(
+      variable %in% c("bike", "boat", "elec","moto", "fuel_dung", "fuel_grass", "fuel_wood",
+                      "income","hhsize","wealth_index") ~ "Economic",
+      variable %in% c("mother_age", "mother_edu", "father_edu","gestational_age") ~ "Demographic",
+      variable %in% c("dist_to_perm_water", "dist_to_seasonal_water","flood_prepared", "inside_hh_flooded", "latrine_flooded", "tubewell_flooded",
+                      "flood_compound", "flood_union") ~ "Water and flooding",
+      variable %in% c("n_cow", "n_goat", "n_chicken") ~ "Animal ownership",
+      variable %in% c("own_house", "private_toilet", "satisfied_house") ~ "Housing"
+    )
+  )
+  
+  # List variables in top 25% of importance
+  top_vars <- var_importance_sorted %>%
+    filter(importance >= quantile(importance, 0.75)) %>%
+    pull(variable)
+  
+  # Calculate the range of negative importance values
+  neg_range <- range(var_importance_sorted$importance[var_importance_sorted$importance < 0])
+  
+  # Filter out variables with negative, zero, or small positive importance
+  filtered_importance <- var_importance_sorted %>%
+    filter(importance > 0 & importance > neg_range[2])
+  
+  # Calculate OOB error
+  oob_prediction <- predict(rf_model, OOB = TRUE, type = "response")
+  oob_error <- mean(oob_prediction != vi_data[[outcome]])
+  oob_accuracy <- 1 - oob_error
+  
+  return(list(
+    rf_model = rf_model,
+    tuned_model = tuned_model,
+    best_mtry = best_mtry,
+    oob_error = oob_error, 
+    oob_accuracy = oob_accuracy, 
+    var_importance_sorted = var_importance_sorted, 
+    top_vars = top_vars,
+    filtered_importance = filtered_importance
+  ))
 }

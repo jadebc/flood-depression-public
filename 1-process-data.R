@@ -4,8 +4,6 @@ rm(list=ls())
 library(lubridate)
 library(readxl)
 library(readstata13)
-
-
 library(tidyverse)
 library(here)
 library(ggplot2)
@@ -20,15 +18,19 @@ library(writexl)
 
 source(paste0(here::here(), '/0-config.R'))
 
+
 #baseline_raw=read.dta13("/Users/jadebc/Library/CloudStorage/Box-Box/Jade Benjamin-Chung's Externally Shareable Files/CRADLE-Data/Baseline/CRADLE_Baseline_data.dta", convert.factors=F)
+
 baseline_raw=read.dta13("/Users/suhi/Downloads/CRADLE_Baseline_data.dta", convert.factors=F)
+#baseline_raw=read.dta13(paste0(box_path_cradle_data,"Baseline/CRADLE_Baseline_data.dta"), convert.factors=F)
 
 
 #----------------------------------------
 # rename variables and create new variables
 #----------------------------------------
-baseline <- baseline_raw %>% rename(flood_compound = q21_1,
-                                    flood_union = q21_10) %>% 
+baseline <- baseline_raw %>% 
+  rename(flood_compound = q21_1,
+         flood_union = q21_10) %>% 
   mutate(date = as.Date(q1_2, format = "%Y-%m-%d")) %>% 
   mutate(month = month(date)) %>% 
   mutate(flood_union = as.factor(ifelse(flood_union==99,NA,flood_union)),
@@ -42,7 +44,8 @@ baseline <- baseline_raw %>% rename(flood_compound = q21_1,
     gestational_age < 27 ~ 2,
     TRUE ~ 3
   )) %>% 
-  rename(mother_age = q2_2,
+  rename(union = q1_3,
+         mother_age = q2_2,
          mother_edu = q5_1,
          father_edu = q5_2, 
          hhsize = q4_1,
@@ -65,7 +68,11 @@ baseline <- baseline_raw %>% rename(flood_compound = q21_1,
          fuel_grass = ifelse(q19_3==2, 1, 0),
          fuel_dung = ifelse(q19_3==3, 1, 0)) %>% 
   mutate(private_toilet = ifelse(q16_28 == 1, 1, 0),
-         satisfied_house = ifelse(q14_30 <=2, 1, 0))
+         satisfied_house = ifelse(q14_30 <=2, 1, 0)) %>% 
+  mutate(fater_work = case_when())
+
+
+table(baseline$father_work)
 
 
 #----------------------------------------
@@ -135,14 +142,15 @@ baseline <- baseline %>% #converting responses in hours to days
 #----------------------------------------
 # water distance
 #----------------------------------------
-#water <- read.csv("/Users/jadebc/Library/CloudStorage/Box-Box/Jade Benjamin-Chung's Externally Shareable Files/CRADLE-Data/Water-distance/cradle_hh_water_distance.csv") %>% 
-  #mutate(dataid = as.character(dataid)) %>% 
-  #dplyr::select(dataid, dist_to_perm_water, dist_to_seasonal_water)
+
+# water <- read.csv(paste0(box_path_cradle_data, "Water-distance/Baseline_survey_water_dist.csv")) %>% 
+#   mutate(dataid = as.character(dataid)) %>% 
+#   dplyr::select(dataid, dist_to_perm_water, dist_to_seasonal_water)
 
 
-water <- read.csv("/Users/suhi/Downloads/cradle_hh_water_distance.csv") %>% 
-  mutate(dataid = as.character(dataid)) %>% 
-  dplyr::select(dataid, dist_to_perm_water, dist_to_seasonal_water)
+water <- read.csv("/Users/suhi/Downloads/Baseline_survey_water_dist.csv") %>%
+  mutate(dataid = as.character(dataid)) %>%
+  dplyr::select(dataid, dist_to_perm_water, dist_to_seasonal_water, dist_to_any_water)
 
 # merge
 baseline <- left_join(baseline, water, by = "dataid")
@@ -207,37 +215,27 @@ baseline <- baseline %>%
 
 
 
-baseline_flood <- baseline %>% select(q21_13)
-
-
 #----------------------------------------
 # flood preparedness
 #----------------------------------------
-#flood_prep <- read_excel("~/Downloads/flood_preparedness.xlsx")
-
 
 flood_prep <- read_excel("/Users/suhi/Downloads/flood_preparedness_2024_08_16.xlsx")
+#flood_prep <- read_excel(paste0(data_dir, "flood_preparedness_2024_08_16.xlsx"))
+
 
 baseline <- bind_cols(baseline, flood_prep)
 
-#saveRDS(baseline, paste0(here::here(), "/data/baseline_clean.RDS"))
 
 #----------------------------------------
 # percent of surface water 
 #----------------------------------------
 
 sw_df <- readRDS("/Users/suhi/Downloads/analysis_prop_surface_water.RDS")
-#sw_df <- readRDS(paste0(here::here(), "/data/analysis_prop_surface_water.RDS"))
+#sw_df <- readRDS(paste0(data_dir, "analysis_prop_surface_water.RDS"))
 
 baseline <- bind_cols(baseline, sw_df)
 
-#----------------------------------------
-# distance to surface water 
-#----------------------------------------
-
-sw_distance <- readRDS("/Users/suhi/Downloads/analysis_water_distance.RDS")
-#sw_distance <- readRDS(paste0(here::here(), "/data/analysis_water_distance.RDS"))
-
-baseline <- bind_cols(baseline, sw_distance) 
+#saveRDS(baseline, paste0(data_dir, "baseline_clean.RDS"))
 
 saveRDS(baseline, "/Users/suhi/Downloads/baseline_clean.RDS")
+
