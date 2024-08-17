@@ -312,3 +312,44 @@ saveRDS(means, "/Users/suhi/Downloads/flooding_mean_results.RDS")
 
 # EPDS and distance to surface water association -----------------------------------
 
+## EPDS -------------
+# mean in exposed, unexposed
+mean_epds_floodc_exposed <- mean(d$EPDS[d$flood_compound==1])
+mean_epds_floodc_unexposed <- mean(d$EPDS[d$flood_compound==0])
+
+# unadjusted mean difference
+res_epds_floodc_unadj <- fit_glm(data=d, Y_name="EPDS", A_name="flood_compound")
+
+# adjusted mean difference
+res_epds_floodc_adj <- fit_glm(data=d, Y_name="EPDS", A_name="flood_compound",
+                               covariates=covariates)
+
+## depression -------------
+# prevalence in exposed, unexposed
+mean_dep_floodc_exposed <- mean(d$depression[d$flood_compound==1])
+mean_dep_floodc_unexposed <- mean(d$depression[d$flood_compound==0])
+
+
+# unadjusted PR moderate to severe depression
+res_dep_floodc_unadj <- fit_glm(data=d, Y_name="depression", A_name="flood_compound",
+                                family = "binomial")
+
+# adjusted PR moderate to severe depression
+res_dep_floodc_adj <- fit_glm(data=d, Y_name="depression", A_name="flood_compound",
+                              covariates=covariates, family = "binomial")
+
+
+## severe depression -------------
+# prevalence in exposed, unexposed
+mean_dep_sev_floodc_exposed <- mean(d$depression_severe[d$flood_compound==1])
+mean_dep_sev_floodc_unexposed <- mean(d$depression_severe[d$flood_compound==0])
+
+# unadjusted PR severe depression
+res_dep_sev_floodc_unadj <- fit_glm(data=d, Y_name="depression_severe", A_name="flood_compound",
+                                    family = "binomial")
+
+# adjusted PR severe depression
+res_dep_sev_floodc_adj <- fit_glm(data=d, Y_name="depression_severe", A_name="flood_compound",
+                                  covariates=covariates, family = "binomial")
+
+
