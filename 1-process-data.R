@@ -1,20 +1,33 @@
-#########################################
-# CRADLE depression and flooding analysis
 
-# create analysis dataset
-#########################################
 rm(list=ls())
+#install.packages("psych")
 library(lubridate)
+library(readxl)
 library(readstata13)
+library(tidyverse)
+library(here)
+library(ggplot2)
+library(gridExtra)
+library(reshape2)
+library(viridis)
+library(RColorBrewer)
+library(gridExtra)
+library(assertthat)
+library(boxr)
+library(writexl)
+
 source(paste0(here::here(), '/0-config.R'))
 
+#baseline_raw=read.dta13("/Users/suhi/Downloads/CRADLE_Baseline_data.dta", convert.factors=F)
 baseline_raw=read.dta13(paste0(box_path_cradle_data,"Baseline/CRADLE_Baseline_data.dta"), convert.factors=F)
+
 
 #----------------------------------------
 # rename variables and create new variables
 #----------------------------------------
-baseline <- baseline_raw %>% rename(flood_compound = q21_1,
-                                    flood_union = q21_10) %>% 
+baseline <- baseline_raw %>% 
+  rename(flood_compound = q21_1,
+         flood_union = q21_10) %>% 
   mutate(date = as.Date(q1_2, format = "%Y-%m-%d")) %>% 
   mutate(month = month(date)) %>% 
   mutate(flood_union = as.factor(ifelse(flood_union==99,NA,flood_union)),
@@ -28,7 +41,8 @@ baseline <- baseline_raw %>% rename(flood_compound = q21_1,
     gestational_age < 27 ~ 2,
     TRUE ~ 3
   )) %>% 
-  rename(mother_age = q2_2,
+  rename(union = q1_3,
+         mother_age = q2_2,
          mother_edu = q5_1,
          father_edu = q5_2, 
          hhsize = q4_1,
@@ -51,7 +65,31 @@ baseline <- baseline_raw %>% rename(flood_compound = q21_1,
          fuel_grass = ifelse(q19_3==2, 1, 0),
          fuel_dung = ifelse(q19_3==3, 1, 0)) %>% 
   mutate(private_toilet = ifelse(q16_28 == 1, 1, 0),
-         satisfied_house = ifelse(q14_30 <=2, 1, 0))
+         satisfied_house = ifelse(q14_30 <=2, 1, 0)) %>% 
+  mutate(union = as.factor(union))
+
+#----------------------------------------
+# recode father's work 
+#----------------------------------------
+
+baseline <- baseline %>%
+  mutate(father_work = factor(case_when(
+    father_work %in% c(2, 15, 16, 24, 25, 26, 27, 28, 29, 31, 32, 33, 35, 36, 77, 99) ~ "other",
+    father_work %in% c(4, 8) ~ "non_agri_labor",
+    father_work %in% c(1, 3) ~ "agriculture",
+    father_work %in% c(6, 7, 9, 10, 11, 12, 13, 14, 19, 23) ~ "skilled_work",
+    father_work %in% c(17, 18, 21, 22) ~ "business_trader",
+    father_work %in% c(5, 20) ~ "salaried_job",
+    father_work == 30 ~ "unemployed",
+    father_work == 34 ~ "working_abroad"
+  )))
+
+#----------------------------------------
+# add hygienic latrine variable 
+#----------------------------------------
+
+baseline <- baseline %>%
+  mutate(hygienic_latrine = ifelse(q16_13 == 1 & q16_14 == 1 & q16_11 == 1, 1, 0))
 
 #----------------------------------------
 # replace missing codes with NA
@@ -104,12 +142,31 @@ baseline <- baseline %>%
     TRUE ~ 3
   ))
 
+# legnth of flooding 
+baseline <- baseline %>% 
+  rename(num_days_home_flooded = q21_4, 
+         num_days_latrine_flooded = q21_6,
+         num_days_tubewell_flooded = q21_8)
+
+
+baseline <- baseline %>% #converting responses in hours to days 
+  mutate(num_days_home_flooded = ifelse(q21_4a == 2, num_days_home_flooded / 24, num_days_home_flooded),
+        num_days_latrine_flooded = ifelse(q21_6a == 2, num_days_latrine_flooded / 24, num_days_latrine_flooded),
+        num_days_tubewell_flooded = ifelse(q21_8a == 2, num_days_tubewell_flooded / 24, num_days_tubewell_flooded))
+
+
 #----------------------------------------
 # water distance
 #----------------------------------------
-water <- read.csv(paste0(box_path_cradle_data, "Water-distance/Baseline_survey_water_dist.csv")) %>% 
-  mutate(dataid = as.character(dataid)) %>% 
+
+water <- read.csv(paste0(box_path_cradle_data, "Water-distance/Baseline_survey_water_dist.csv")) %>%
+  mutate(dataid = as.character(dataid)) %>%
   dplyr::select(dataid, dist_to_perm_water, dist_to_seasonal_water)
+
+
+# water <- read.csv("/Users/suhi/Downloads/Baseline_survey_water_dist.csv") %>%
+#   mutate(dataid = as.character(dataid)) %>%
+#   dplyr::select(dataid, dist_to_perm_water, dist_to_seasonal_water, dist_to_any_water)
 
 # merge
 baseline <- left_join(baseline, water, by = "dataid")
@@ -173,14 +230,33 @@ baseline <- baseline %>%
   mutate(resilient = ifelse(flood_union == 1 & depression==0, 1, 0))
 
 
+
 #----------------------------------------
 # flood preparedness
 #----------------------------------------
-library(readxl)
-# SUHI PLEASE UPDATE PATH TO USE BOX AFTER YOUR FINISH TRANSLATING
-flood_prep <- read_excel("~/Downloads/flood_preparedness.xlsx")
 
-# baseline <- bind_cols(baseline, flood_prep)
+#flood_prep <- read_excel("/Users/suhi/Downloads/flood_preparedness_2024_08_16.xlsx")
+flood_prep <- read_excel(paste0(data_dir, "flood_preparedness_2024_08_16.xlsx"))
+
+baseline <- bind_cols(baseline, flood_prep)
+
+
+#----------------------------------------
+# percent of surface water 
+#----------------------------------------
+
+#sw_df <- readRDS("/Users/suhi/Downloads/analysis_prop_surface_water.RDS")
+sw_df <- readRDS(paste0(data_dir, "analysis_prop_surface_water.RDS")) %>% 
+  dplyr::select(-union) %>% 
+  mutate(dataid = as.character(dataid))
+
+
+baseline <- baseline %>%
+  left_join(sw_df, by = c("dataid"))
+
 
 saveRDS(baseline, paste0(data_dir, "baseline_clean.RDS"))
+#saveRDS(baseline, "/Users/suhi/Downloads/baseline_clean.RDS")
+
+
 

@@ -8,7 +8,9 @@ library(lubridate)
 library(readstata13)
 source(paste0(here::here(), '/0-config.R'))
 
+
 d = readRDS(paste0(data_dir, "/baseline_clean.RDS"))
+#d <- readRDS("/Users/suhi/Downloads/baseline_clean.RDS")
 
 # define covariates for regression models
 covariates <- c("month", "wealth_index", "mother_edu", "mother_age", "gestational_age")
@@ -121,5 +123,7 @@ res <- data.frame(
 )
 
 saveRDS(res, paste0(data_dir, "/depression_surface_water_regression_results.RDS"))
+#saveRDS(res, "/Users/suhi/Downloads/depression_surface_water_regression_results.RDS")
+
 
 
