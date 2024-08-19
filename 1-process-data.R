@@ -18,11 +18,8 @@ library(writexl)
 
 source(paste0(here::here(), '/0-config.R'))
 
-
-#baseline_raw=read.dta13("/Users/jadebc/Library/CloudStorage/Box-Box/Jade Benjamin-Chung's Externally Shareable Files/CRADLE-Data/Baseline/CRADLE_Baseline_data.dta", convert.factors=F)
-
-baseline_raw=read.dta13("/Users/suhi/Downloads/CRADLE_Baseline_data.dta", convert.factors=F)
-#baseline_raw=read.dta13(paste0(box_path_cradle_data,"Baseline/CRADLE_Baseline_data.dta"), convert.factors=F)
+#baseline_raw=read.dta13("/Users/suhi/Downloads/CRADLE_Baseline_data.dta", convert.factors=F)
+baseline_raw=read.dta13(paste0(box_path_cradle_data,"Baseline/CRADLE_Baseline_data.dta"), convert.factors=F)
 
 
 #----------------------------------------
@@ -69,11 +66,30 @@ baseline <- baseline_raw %>%
          fuel_dung = ifelse(q19_3==3, 1, 0)) %>% 
   mutate(private_toilet = ifelse(q16_28 == 1, 1, 0),
          satisfied_house = ifelse(q14_30 <=2, 1, 0)) %>% 
-  mutate(fater_work = case_when())
+  mutate(union = as.factor(union))
 
+#----------------------------------------
+# recode father's work 
+#----------------------------------------
 
-table(baseline$father_work)
+baseline <- baseline %>%
+  mutate(father_work = factor(case_when(
+    father_work %in% c(2, 15, 16, 24, 25, 26, 27, 28, 29, 31, 32, 33, 35, 36, 77, 99) ~ "other",
+    father_work %in% c(4, 8) ~ "non_agri_labor",
+    father_work %in% c(1, 3) ~ "agriculture",
+    father_work %in% c(6, 7, 9, 10, 11, 12, 13, 14, 19, 23) ~ "skilled_work",
+    father_work %in% c(17, 18, 21, 22) ~ "business_trader",
+    father_work %in% c(5, 20) ~ "salaried_job",
+    father_work == 30 ~ "unemployed",
+    father_work == 34 ~ "working_abroad"
+  )))
 
+#----------------------------------------
+# add hygienic latrine variable 
+#----------------------------------------
+
+baseline <- baseline %>%
+  mutate(hygienic_latrine = ifelse(q16_13 == 1 & q16_14 == 1 & q16_11 == 1, 1, 0))
 
 #----------------------------------------
 # replace missing codes with NA
@@ -143,14 +159,14 @@ baseline <- baseline %>% #converting responses in hours to days
 # water distance
 #----------------------------------------
 
-# water <- read.csv(paste0(box_path_cradle_data, "Water-distance/Baseline_survey_water_dist.csv")) %>% 
-#   mutate(dataid = as.character(dataid)) %>% 
-#   dplyr::select(dataid, dist_to_perm_water, dist_to_seasonal_water)
-
-
-water <- read.csv("/Users/suhi/Downloads/Baseline_survey_water_dist.csv") %>%
+water <- read.csv(paste0(box_path_cradle_data, "Water-distance/Baseline_survey_water_dist.csv")) %>%
   mutate(dataid = as.character(dataid)) %>%
-  dplyr::select(dataid, dist_to_perm_water, dist_to_seasonal_water, dist_to_any_water)
+  dplyr::select(dataid, dist_to_perm_water, dist_to_seasonal_water)
+
+
+# water <- read.csv("/Users/suhi/Downloads/Baseline_survey_water_dist.csv") %>%
+#   mutate(dataid = as.character(dataid)) %>%
+#   dplyr::select(dataid, dist_to_perm_water, dist_to_seasonal_water, dist_to_any_water)
 
 # merge
 baseline <- left_join(baseline, water, by = "dataid")
@@ -219,9 +235,8 @@ baseline <- baseline %>%
 # flood preparedness
 #----------------------------------------
 
-flood_prep <- read_excel("/Users/suhi/Downloads/flood_preparedness_2024_08_16.xlsx")
-#flood_prep <- read_excel(paste0(data_dir, "flood_preparedness_2024_08_16.xlsx"))
-
+#flood_prep <- read_excel("/Users/suhi/Downloads/flood_preparedness_2024_08_16.xlsx")
+flood_prep <- read_excel(paste0(data_dir, "flood_preparedness_2024_08_16.xlsx"))
 
 baseline <- bind_cols(baseline, flood_prep)
 
@@ -230,12 +245,18 @@ baseline <- bind_cols(baseline, flood_prep)
 # percent of surface water 
 #----------------------------------------
 
-sw_df <- readRDS("/Users/suhi/Downloads/analysis_prop_surface_water.RDS")
-#sw_df <- readRDS(paste0(data_dir, "analysis_prop_surface_water.RDS"))
+#sw_df <- readRDS("/Users/suhi/Downloads/analysis_prop_surface_water.RDS")
+sw_df <- readRDS(paste0(data_dir, "analysis_prop_surface_water.RDS")) %>% 
+  dplyr::select(-union) %>% 
+  mutate(dataid = as.character(dataid))
 
-baseline <- bind_cols(baseline, sw_df)
 
-#saveRDS(baseline, paste0(data_dir, "baseline_clean.RDS"))
+baseline <- baseline %>%
+  left_join(sw_df, by = c("dataid"))
 
-saveRDS(baseline, "/Users/suhi/Downloads/baseline_clean.RDS")
+
+saveRDS(baseline, paste0(data_dir, "baseline_clean.RDS"))
+#saveRDS(baseline, "/Users/suhi/Downloads/baseline_clean.RDS")
+
+
 
