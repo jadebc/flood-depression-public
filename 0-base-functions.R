@@ -277,13 +277,6 @@ run_random_forest <- function(data, outcome, predictors) {
     filter(importance >= quantile(importance, 0.75)) %>%
     pull(variable)
   
-  # Calculate the range of negative importance values
-  neg_range <- range(var_importance_sorted$importance[var_importance_sorted$importance < 0])
-  
-  # Filter out variables with negative, zero, or small positive importance
-  filtered_importance <- var_importance_sorted %>%
-    filter(importance > 0 & importance > neg_range[2])
-  
   # Calculate OOB error
   oob_prediction <- predict(rf_model, OOB = TRUE, type = "response")
   oob_error <- mean(oob_prediction != vi_data[[outcome]])
@@ -296,7 +289,6 @@ run_random_forest <- function(data, outcome, predictors) {
     oob_error = oob_error, 
     oob_accuracy = oob_accuracy, 
     var_importance_sorted = var_importance_sorted, 
-    top_vars = top_vars,
-    filtered_importance = filtered_importance
+    top_vars = top_vars
   ))
 }
