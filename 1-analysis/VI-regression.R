@@ -16,10 +16,6 @@ baseline$father_work_agr = ifelse(baseline$father_work=="agriculture", 1, 0)
 dep_age_model <- fit_glm(data=baseline, Y_name="depression", A_name="mother_age",
                          family = "poisson")[1,]
 
-dep_hyg_lat_model <- fit_glm(data=baseline, Y_name="depression", A_name="hygienic_latrine",
-                             covariates = c("wealth_index","hhsize","mother_edu"),
-                             family = "poisson")[1,]
-
 dep_income_model <- fit_glm(data=baseline, Y_name="depression", A_name="income",
                             covariates = c("month"),
                             family = "poisson")[1,]
@@ -60,7 +56,7 @@ dep_father_work_model <- fit_glm(data=baseline, Y_name="depression",
 
 
 depression_ORs <- bind_rows(
-  dep_age_model, dep_hyg_lat_model, dep_income_model, dep_ownhouse_model,
+  dep_age_model, dep_income_model, dep_ownhouse_model,
   dep_hhsize_model, dep_latrine_flooded_model, dep_flood_prep_model,
   dep_wealth_model, dep_edu_model, dep_floodc_model, dep_father_work_model
 ) 
@@ -71,7 +67,6 @@ depression_ORs$label <- factor(depression_ORs$label, levels = depression_ORs$lab
 depression_ORs <- depression_ORs %>% mutate(var_cat = case_when(
   label == "latrine_flooded" ~ "Flooding",
   label == "flood_compound" ~ "Flooding",
-  label == "hygienic_latrine" ~ "Housing",
   label == "mother_age" ~ "Demographics",
   label == "hhsize" ~ "Demographics",
   label == "mother_edu" ~ "Demographics",
