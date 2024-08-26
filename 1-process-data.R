@@ -59,7 +59,9 @@ baseline <- baseline_raw %>%
          flood_prepared = q21_12, 
          inside_hh_flooded = q21_3,
          latrine_flooded = q21_5,
-         tubewell_flooded = q21_7
+         tubewell_flooded = q21_7,
+         toilet_hhs = q16_26,
+         toilet_share = q16_25
   ) %>% 
   mutate(fuel_wood = ifelse(q19_3==1, 1, 0),
          fuel_grass = ifelse(q19_3==2, 1, 0),
@@ -88,8 +90,29 @@ baseline <- baseline %>%
 # add hygienic latrine variable 
 #----------------------------------------
 
+# baseline <- baseline %>%
+#   mutate(hygienic_latrine = ifelse(q16_13 == 1 & q16_14 == 1 & q16_11 == 1, 1, 0))
+
+# definition here: https://journals.plos.org/plosntds/article?id=10.1371/journal.pntd.0004256
+
+baseline <- baseline %>% mutate(
+  latrine_flush_sewer = ifelse(q16_13==1 & q16_15==1, 1, 0),
+  latrine_septic_tank = ifelse(q16_13==1 & q16_15==2, 1, 0),
+  latrine_pit_slab_seal = ifelse(q16_13==1 & q16_15==3 & q16_11==1 & q16_14==1, 1, 0),
+  latrine_slab_lid_noseal = ifelse(q16_13==1 & q16_15==3 & q16_11==1 & q16_21==1, 1, 0),
+  latrine_composting = ifelse(q16_24 ==1, 1, 0),
+  latrine_canal_ditch = ifelse(q16_15==4, 1, 0),
+  latrine_pit_no_seal = ifelse(q16_13==1 & q16_15==3 & q16_11==1 & (q16_14==2 | q16_14==3), 1, 0),
+  latrine_hanging = ifelse(q16_17==1, 1, 0)
+)
+
 baseline <- baseline %>%
-  mutate(hygienic_latrine = ifelse(q16_13 == 1 & q16_14 == 1 & q16_11 == 1, 1, 0))
+  mutate(hygienic_latrine = case_when(
+    latrine_flush_sewer == 1 | latrine_septic_tank == 1 | latrine_pit_slab_seal == 1 | latrine_slab_lid_noseal == 1 | latrine_composting == 1 ~ 1,
+    latrine_canal_ditch == 1 | latrine_pit_no_seal == 1 | latrine_hanging == 1 ~ 0,
+    TRUE ~ NA
+  ))
+
 
 #----------------------------------------
 # replace missing codes with NA

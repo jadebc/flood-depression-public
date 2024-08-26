@@ -9,7 +9,6 @@ source(paste0(here::here(), '/0-config.R'))
 library(randomForest)
 library(caret)
 library(party)
-#install.packages("party")
 
 baseline = readRDS(paste0(data_dir, "baseline_clean.RDS"))
 #baseline = readRDS("/Users/suhi/Downloads/baseline_clean.RDS")
@@ -23,7 +22,6 @@ predictors <- c("union", "rainy_season",
                 "gestational_age",
                 "dist_to_perm_water", "dist_to_seasonal_water",
                 "wealth_index", "mother_edu", "father_edu", "hhsize", "father_work",
-                "hygienic_latrine",
                 "elec", "bike","moto", "boat", 
                 "flood_prepared", 
                 "inside_hh_flooded", "latrine_flooded", "tubewell_flooded", 
