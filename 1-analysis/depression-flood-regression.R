@@ -14,7 +14,7 @@ d = readRDS(paste0(data_dir, "/baseline_clean.RDS"))
 
 
 # covariates for regression
-covariates <- c("month", "wealth_index", "mother_edu", "mother_age", "gestational_age", "dist_to_any_water")
+covariates <- c("month_b", "wealth_index", "mother_edu", "mother_age", "gestational_age", "dist_to_any_water")
 
 # EPDS individual components and flooding in the compound association -----------------------------------
 
@@ -46,7 +46,7 @@ process_variable <- function(variable) {
   
 
   res <- fit_glm(data = d, Y_name = binary_col, A_name = "flood_compound",
-                 covariates = c("mother_age", "month"),
+                 covariates = c("mother_age", "month_b"),
                     family = "binomial")
   
   # store regression results 
