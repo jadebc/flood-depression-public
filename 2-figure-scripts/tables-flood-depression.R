@@ -61,8 +61,8 @@ perc_vars <- c("income_less_12", "flood_union", "flood_compound", "inside_hh_flo
 # Convert Mean/% column values to percentage where applicable
 comb_summary_stats <- comb_summary_stats %>% 
   mutate(`Mean/%` = ifelse(Variable %in% perc_vars, 
-                           paste0(sprintf("%.2f", `Mean/%` * 100), "%"), 
-                           sprintf("%.2f", `Mean/%`)))
+                           paste0(sprintf("%.1f", `Mean/%` * 100), "%"), 
+                           sprintf("%.1f", `Mean/%`)))
 
 labels <- c(
   "Mother's years of education", "Mother's age in years", "Gestational age in weeks", "Number of household members", "Monthly income < 12,001 taka", "Union flooded for at least one day in past 6 months",
@@ -256,7 +256,7 @@ table2 <- table2 %>% dplyr::select(relocate_suspended_platform, relocate_boat_ra
 tab2_perc <- table2 %>%
   summarize(across(everything(), ~ mean(., na.rm = TRUE))) %>%
   pivot_longer(cols = everything(), names_to = "Variable", values_to = "%") %>% 
-  mutate(`%` = paste0(sprintf("%.2f", `%` * 100), "%"))
+  mutate(`%` = paste0(sprintf("%.1f", `%` * 100), "%"))
 
 tab2_lab <- c(
   "Temporarily relocate to suspended platform", "Temporarily relocate to boat or raft", "Temporarily relocate to road", 
@@ -268,7 +268,8 @@ tab2_lab <- c(
 tab2_perc <- tab2_perc %>%
   mutate(Label = tab2_lab) %>% 
   relocate(Label, .after = Variable) %>% 
-  dplyr::select(-Variable)
+  dplyr::select(-Variable) %>% 
+  arrange(desc(`%`))
 
 write.csv(tab2_perc, file= paste0(table_path, "tab2_flood_dep.csv"), row.names = FALSE)
 #write.csv(tab2_perc, "/Users/suhi/Downloads/table2_flood_dep.csv", row.names = FALSE)
@@ -278,7 +279,7 @@ write.csv(tab2_perc, file= paste0(table_path, "tab2_flood_dep.csv"), row.names =
 # reg_unadj <- readRDS("/Users/suhi/Downloads/flooding_regression_results_unadj.RDS") %>% 
 #   dplyr::select(-covariates, -model, -parameter_type) 
 
-reg_unadj <- readRDS(paste0(data_dir, "flooding_regression_results_adj.RDS")) %>% 
+reg_unadj <- readRDS(paste0(data_dir, "flooding_regression_results_unadj.RDS")) %>% 
   dplyr::select(-covariates, -model, -parameter_type) 
 
 # reg_adj <- readRDS("/Users/suhi/Downloads/flooding_regression_results_adj.RDS") %>%
@@ -305,8 +306,8 @@ reg <- reg %>%
 
 tab3 <- reg %>% 
   filter(outcome != "EPDS") %>% 
-  mutate(mean_unexposed = sprintf("%.2f%%", mean_unexposed * 100),
-         mean_exposed = sprintf("%.2f%%", mean_exposed * 100)) %>% 
+  mutate(mean_unexposed = sprintf("%.1f%%", mean_unexposed * 100),
+         mean_exposed = sprintf("%.1f%%", mean_exposed * 100)) %>% 
   relocate(mean_exposed, .after = N) %>%
   relocate(mean_unexposed, .after = mean_exposed) %>% 
   rename("Prevalence among exposed" = mean_exposed, "Prevalence among unexposed" = mean_unexposed,
@@ -328,8 +329,8 @@ tab4 <- reg %>%
   filter(outcome == "EPDS") %>% 
   relocate(mean_exposed, .after = N) %>% 
   relocate(mean_unexposed, .after = mean_exposed) %>% 
-  mutate(mean_exposed = sprintf("%.2f", mean_exposed),
-         mean_unexposed = sprintf("%.2f", mean_unexposed)) %>% 
+  mutate(mean_exposed = sprintf("%.1f", mean_exposed),
+         mean_unexposed = sprintf("%.1f", mean_unexposed)) %>% 
   rename("Mean among exposed" = mean_exposed, "Mean among unexposed" = mean_unexposed,
          "Crude mean difference (95% CI)" = CI, "Adjusted * mean difference (95% CI)" = CI_adj) %>% 
   mutate(Variable = c("Flooded latrine", "Flooded compound", "Flooded union")) %>% 
@@ -347,8 +348,8 @@ tab5 <- readRDS(paste0(data_dir,"epds_individual_regression_results.RDS"))
 tab5 <- tab5 %>% 
   filter(label == "flood_compound") %>% 
   mutate("Adjusted prevalence ratio (95% CI)" = sprintf("%.2f (%.2f, %.2f)", pt_estimate, CI_lower, CI_upper)) %>% 
-  mutate("Prevalence among exposed" = sprintf("%.2f%%", mean_exposed * 100),
-         "Prevalence among unexposed" = sprintf("%.2f%%", mean_unexposed * 100)) %>% 
+  mutate("Prevalence among exposed" = sprintf("%.1f%%", mean_exposed * 100),
+         "Prevalence among unexposed" = sprintf("%.1f%%", mean_unexposed * 100)) %>% 
   mutate(Variable = c("Difficult to see funny side of things",
                       "Difficult to look forward to enjoyment",
                       "Blamed self unnecessarily when things went wrong",
