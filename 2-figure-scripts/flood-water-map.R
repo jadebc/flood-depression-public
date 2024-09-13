@@ -1,7 +1,7 @@
 #########################################
 # CRADLE depression and flooding analysis
 
-# regression analysis of flooding and depression
+# maps of flooding and sw
 #########################################
 rm(list=ls())
 source(paste0(here::here(), '/0-config.R'))

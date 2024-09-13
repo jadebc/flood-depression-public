@@ -264,32 +264,6 @@ baseline <- baseline %>%
   left_join(sw_df, by = c("dataid"))
 
 
-#----------------------------------------
-# hist for slides
-#----------------------------------------
-
-# Convert numeric month to factor to display month names, ensuring all months are included as levels
-baseline$month <- factor(baseline$month, 
-                         levels = 1:12, 
-                         labels = c("January", "February", "March", "April", "May", "June", 
-                                    "July", "August", "September", "October", "November", "December"))
-
-# Create the bar chart with grayscale colors and font size 12
-ggplot(baseline, aes(x = month)) +
-  geom_bar(fill = "gray70", color = "black") +  # Use geom_bar() for categorical data
-  labs(x = "Month", y = "Count", title = "") +
-  theme(
-    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 12), # Set x-axis text size
-    axis.text.y = element_text(size = 12),                                     # Set y-axis text size
-    axis.title.x = element_text(size = 12),                                    # Set x-axis title size
-    axis.title.y = element_text(size = 12),                                    # Set y-axis title size
-    plot.title = element_text(size = 12)                                       # Set plot title size
-  )
-
-table(baseline$month_b)
-
-#----------------------------------------
-
 saveRDS(baseline, paste0(data_dir, "baseline_clean.RDS"))
 #saveRDS(baseline, "/Users/suhi/Downloads/baseline_clean.RDS")
 
