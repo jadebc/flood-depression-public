@@ -14,7 +14,7 @@ d = readRDS(paste0(data_dir, "/baseline_clean.RDS"))
 
 
 # covariates for regression
-covariates <- c("month", "wealth_index", "mother_edu", "mother_age", "gestational_age", "dist_to_any_water")
+covariates <- c("month_b", "wealth_index", "mother_edu", "mother_age", "gestational_age", "dist_to_any_water")
 
 # EPDS individual components and flooding in the compound association -----------------------------------
 
@@ -28,7 +28,7 @@ process_variable <- function(variable) {
   binary_col <- paste0(variable, "_binary")
   
   # create binary column for each question
-  # 1 if value is 1,2 or 3, 0 otherwise, NA if NA
+  # 1 if value is 2 or 3, 0 otherwise, NA if NA
   d <<- d %>%
     mutate(!!binary_col := case_when(
       get(variable) %in% c(2, 3) ~ 1,
@@ -46,7 +46,8 @@ process_variable <- function(variable) {
   
 
   res <- fit_glm(data = d, Y_name = binary_col, A_name = "flood_compound",
-                 covariates = c("mother_age", "month"),
+                 covariates = covariates,
+                 #covariates = c("mother_age", "month_b"),
                     family = "binomial")
   
   # store regression results 

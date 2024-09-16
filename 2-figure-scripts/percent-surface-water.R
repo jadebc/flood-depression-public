@@ -37,8 +37,8 @@ max(coords$Y) # 24.78787
 min(coords$Y) # 23.96359
 
 # # read in seasonality raster for Bangladesh
-#seasonality_raster = terra::rast("/Users/suhi/Downloads/seasonality_raw.tif") # data resolution 29.48906m * 29.48906m
-seasonality_raster = terra::rast(paste0(box_shapefile_path, "seasonality_raw.tif"))
+seasonality_raster = terra::rast("/Users/suhi/Downloads/seasonality_raw.tif") # data resolution 29.48906m * 29.48906m
+#seasonality_raster = terra::rast(paste0(box_shapefile_path, "seasonality_raw.tif"))
 
 ## crop seasonality raster to study area
 crop_extent <- extent(88, 92, 22, 26)
@@ -86,13 +86,13 @@ seasonal_raster <- rast(paste0(box_shapefile_path, "rasters/seasonal_raster_epsg
 ########### Detect Proportion of Surface Water ############
 ###########################################################
 
-# ll <- read.dta13("/Users/suhi/Downloads/CRADLE_Baseline_data.dta", convert.factors=F) %>%
-#   dplyr::select(dataid, gpslatitudedegrees, gpslongitudedegrees, q1_3) %>%
-#   rename(hhcode = dataid, lat = gpslatitudedegrees, long = gpslongitudedegrees, union = q1_3)
-
-ll <- read.dta13(paste0(box_path_cradle_data,"Baseline/CRADLE_Baseline_data.dta"), convert.factors=F) %>%
+ll <- read.dta13("/Users/suhi/Downloads/CRADLE_Baseline_data.dta", convert.factors=F) %>%
   dplyr::select(dataid, gpslatitudedegrees, gpslongitudedegrees, q1_3) %>%
   rename(hhcode = dataid, lat = gpslatitudedegrees, long = gpslongitudedegrees, union = q1_3)
+
+# ll <- read.dta13(paste0(box_path_cradle_data,"Baseline/CRADLE_Baseline_data.dta"), convert.factors=F) %>%
+#   dplyr::select(dataid, gpslatitudedegrees, gpslongitudedegrees, q1_3) %>%
+#   rename(hhcode = dataid, lat = gpslatitudedegrees, long = gpslongitudedegrees, union = q1_3)
 
 # Store original coordinates
 ll <- ll %>%
@@ -168,4 +168,6 @@ sw_df <- left_join(perm_water_df, seasonal_water_df, by = c("union", "hhcode")) 
 #saveRDS(sw_df, "/Users/suhi/Downloads/analysis_prop_surface_water.RDS")
 saveRDS(sw_df, paste0(data_dir, "analysis_prop_surface_water.RDS"))
 
+
+# drop 10 for perm water 
 

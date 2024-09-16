@@ -18,8 +18,8 @@ library(writexl)
 
 source(paste0(here::here(), '/0-config.R'))
 
-#baseline_raw=read.dta13("/Users/suhi/Downloads/CRADLE_Baseline_data.dta", convert.factors=F)
-baseline_raw=read.dta13(paste0(box_path_cradle_data,"Baseline/CRADLE_Baseline_data.dta"), convert.factors=F)
+baseline_raw=read.dta13("/Users/suhi/Downloads/CRADLE_Baseline_data.dta", convert.factors=F)
+#baseline_raw=read.dta13(paste0(box_path_cradle_data,"Baseline/CRADLE_Baseline_data.dta"), convert.factors=F)
 
 
 #----------------------------------------
@@ -69,6 +69,15 @@ baseline <- baseline_raw %>%
   mutate(private_toilet = ifelse(q16_28 == 1, 1, 0),
          satisfied_house = ifelse(q14_30 <=2, 1, 0)) %>% 
   mutate(union = as.factor(union))
+
+#-----------------------------------------------
+# create binary variable for rainy vs dry months
+#-----------------------------------------------
+
+#the rainy season is June-October (6-10)
+
+baseline <- baseline %>% 
+  mutate(month_b = ifelse(month >= 6 & month <= 10, 1, 0))
 
 #----------------------------------------
 # recode father's work 
@@ -182,14 +191,14 @@ baseline <- baseline %>% #converting responses in hours to days
 # water distance
 #----------------------------------------
 
-water <- read.csv(paste0(box_path_cradle_data, "Water-distance/Baseline_survey_water_dist.csv")) %>%
-  mutate(dataid = as.character(dataid)) %>%
-  dplyr::select(dataid, dist_to_perm_water, dist_to_seasonal_water)
-
-
-# water <- read.csv("/Users/suhi/Downloads/Baseline_survey_water_dist.csv") %>%
+# water <- read.csv(paste0(box_path_cradle_data, "Water-distance/Baseline_survey_water_dist.csv")) %>%
 #   mutate(dataid = as.character(dataid)) %>%
-#   dplyr::select(dataid, dist_to_perm_water, dist_to_seasonal_water, dist_to_any_water)
+#   dplyr::select(dataid, dist_to_perm_water, dist_to_seasonal_water)
+
+
+water <- read.csv("/Users/suhi/Downloads/Baseline_survey_water_dist.csv") %>%
+  mutate(dataid = as.character(dataid)) %>%
+  dplyr::select(dataid, dist_to_perm_water, dist_to_seasonal_water, dist_to_any_water)
 
 # merge
 baseline <- left_join(baseline, water, by = "dataid")
