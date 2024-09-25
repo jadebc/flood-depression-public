@@ -38,5 +38,4 @@ rf_depression <- run_random_forest(data = baseline,
                   predictors = predictors)
   
 saveRDS(rf_depression, paste0(data_dir, "rf_depression.RDS"))
-#saveRDS(rf_depression, "/Users/suhi/Downloads/rf_depression.RDS")
 
