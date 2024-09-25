@@ -83,7 +83,7 @@ depression_PRs <- depression_PRs %>%
     label == "age_over_23" ~ "Age > 23 years",
     label == "hhsize_over_4" ~ "Household size > 4",
     label == "edu_over_6" ~ "Education > 6 years",
-    label == "income_over_5" ~ "Household income > 5",
+    label == "income_over_5" ~ "Household income > 12,000 taka",
     label == "flood_prepared" ~ "Prepared for next flood",
     label == "father_work_agr" ~ "Spouse works in agriculture",
     label == "wealth_above_med" ~ "Above median wealth",
