@@ -48,7 +48,7 @@ process_variable <- function(variable) {
   res <- fit_glm(data = d, Y_name = binary_col, A_name = "flood_compound",
                  covariates = covariates,
                  #covariates = c("mother_age", "month_b"),
-                    family = "binomial")
+                    family = "poisson")
   
   # store regression results 
   regression_results[[binary_col]] <<- res
@@ -101,11 +101,11 @@ mean_dep_floodl_unexposed <- mean(d$depression[d$latrine_flooded==0])
 
 # unadjusted PR moderate to severe depression
 res_dep_floodl_unadj <- fit_glm(data=d, Y_name="depression", A_name="latrine_flooded",
-                                family = "binomial")
+                                family = "poisson")
 
 # adjusted PR moderate to severe depression
 res_dep_floodl_adj <- fit_glm(data=d, Y_name="depression", A_name="latrine_flooded",
-                              covariates=covariates, family = "binomial")
+                              covariates=covariates, family = "poisson")
 
 
 ## severe depression -------------
@@ -116,11 +116,11 @@ mean_dep_sev_floodl_unexposed <- mean(d$depression_severe[d$latrine_flooded==0])
 
 # unadjusted PR severe depression
 res_dep_sev_floodl_unadj <- fit_glm(data=d, Y_name="depression_severe", A_name="latrine_flooded",
-                                family = "binomial")
+                                family = "poisson")
 
 # adjusted PR severe depression
 res_dep_sev_floodl_adj <- fit_glm(data=d, Y_name="depression_severe", A_name="latrine_flooded",
-                              covariates=covariates, family = "binomial")
+                              covariates=covariates, family = "poisson")
 
 
 # flooding in the compound -----------------------------------------------
@@ -145,11 +145,11 @@ mean_dep_floodc_unexposed <- mean(d$depression[d$flood_compound==0])
 
 # unadjusted PR moderate to severe depression
 res_dep_floodc_unadj <- fit_glm(data=d, Y_name="depression", A_name="flood_compound",
-                                family = "binomial")
+                                family = "poisson")
 
 # adjusted PR moderate to severe depression
 res_dep_floodc_adj <- fit_glm(data=d, Y_name="depression", A_name="flood_compound",
-                               covariates=covariates, family = "binomial")
+                               covariates=covariates, family = "poisson")
 
 ## severe depression -------------
 # prevalence in exposed, unexposed
@@ -158,11 +158,11 @@ mean(d$depression_severe[d$flood_compound==0])
 
 # unadjusted PR
 res_sdep_floodc_unadj <- fit_glm(data=d, Y_name="depression_severe", A_name="flood_compound",
-                                family = "binomial")
+                                family = "poisson")
 
 # adjusted PR
 res_sdep_floodc_adj <- fit_glm(data=d, Y_name="depression_severe", A_name="flood_compound",
-                              covariates=covariates, family = "binomial")
+                              covariates=covariates, family = "poisson")
 
 
 
@@ -173,11 +173,11 @@ mean_dep_sev_floodc_unexposed <- mean(d$depression_severe[d$flood_compound==0])
 
 # unadjusted PR severe depression
 res_dep_sev_floodc_unadj <- fit_glm(data=d, Y_name="depression_severe", A_name="flood_compound",
-                                family = "binomial")
+                                family = "poisson")
 
 # adjusted PR severe depression
 res_dep_sev_floodc_adj <- fit_glm(data=d, Y_name="depression_severe", A_name="flood_compound",
-                              covariates=covariates, family = "binomial")
+                              covariates=covariates, family = "poisson")
 
 
 # flooding in the union -----------------------------------------------
@@ -201,11 +201,11 @@ mean_dep_floodu_unexposed <- mean(d$depression[d$flood_union==0], na.rm=T)
 
 # unadjusted PR
 res_dep_floodu_unadj <- fit_glm(data=d, Y_name="depression", A_name="flood_union",
-                                family = "binomial")
+                                family = "poisson")
 
 # adjusted PR
 res_dep_floodu_adj <- fit_glm(data=d, Y_name="depression", A_name="flood_union",
-                              covariates=covariates, family = "binomial")
+                              covariates=covariates, family = "poisson")
 
 ## severe depression -------------
 # prevalence in exposed, unexposed
@@ -214,11 +214,11 @@ mean_dep_sev_floodu_unexposed <- mean(d$depression_severe[d$flood_union==0], na.
 
 # unadjusted PR
 res_dep_sev_floodu_unadj <- fit_glm(data=d, Y_name="depression_severe", A_name="flood_union",
-                                    family = "binomial")
+                                    family = "poisson")
 
 # adjusted PR
 res_dep_sev_floodu_adj <- fit_glm(data=d, Y_name="depression_severe", A_name="flood_union",
-                                  covariates=covariates, family = "binomial")
+                                  covariates=covariates, family = "poisson")
 
 # combine and save results ------------------------------------------------
 # save regression results
