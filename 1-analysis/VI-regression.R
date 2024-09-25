@@ -9,14 +9,23 @@ source(paste0(here::here(), '/0-config.R'))
 
 baseline = readRDS(paste0(data_dir, "baseline_clean.RDS"))
 
-baseline$father_work_agr = ifelse(baseline$father_work=="agriculture", 1, 0)
+baseline$father_work_agr = as.factor(ifelse(baseline$father_work=="agriculture", 1, 0))
 
+# indicators for above median
+baseline$age_over_23 = as.factor(ifelse(baseline$mother_age>23, 1, 0))
+baseline$hhsize_over_4 = as.factor(ifelse(baseline$hhsize>4, 1, 0))
+baseline$edu_over_6 = as.factor(ifelse(baseline$mother_edu>6, 1, 0))
+baseline$income_over_5 = as.factor(ifelse(baseline$income>5, 1, 0))
+baseline$wealth_above_med = as.factor(ifelse(baseline$wealth_index>median(baseline$wealth_index), 1, 0))
 
 # depression models ------------------------------------------------
 dep_age_model <- fit_glm(data=baseline, Y_name="depression", A_name="mother_age",
                          family = "poisson")[1,]
 
-dep_income_model <- fit_glm(data=baseline, Y_name="depression", A_name="income",
+dep_age_model <- fit_glm(data=baseline, Y_name="depression", A_name="age_over_23",
+                         family = "poisson")[1,]
+
+dep_income_model <- fit_glm(data=baseline, Y_name="depression", A_name="income_over_5",
                             covariates = c("month"),
                             family = "poisson")[1,]
 
@@ -24,23 +33,24 @@ dep_ownhouse_model <- fit_glm(data=baseline, Y_name="depression", A_name="own_ho
                               covariates = c("wealth_index"),
                               family = "poisson")[1,]
 
-dep_hhsize_model <- fit_glm(data=baseline, Y_name="depression", A_name="hhsize",
+dep_hhsize_model <- fit_glm(data=baseline, Y_name="depression", A_name="hhsize_over_4",
                             covariates = "wealth_index", family = "poisson")[1,]
 
 dep_latrine_flooded_model <- fit_glm(data=baseline, Y_name="depression", A_name="latrine_flooded",
-                                covariates = c("wealth_index","month","mother_edu"),
+                                covariates = c("wealth_index","month","mother_edu",
+                                               ),
                                 family = "poisson")[1,]
 
 dep_flood_prep_model <- fit_glm(data=baseline, Y_name="depression", A_name="flood_prepared",
                              covariates = c("wealth_index","month","mother_edu"),
                              family = "poisson")[1,]
 
-dep_wealth_model <- fit_glm(data=baseline, Y_name="depression", A_name="wealth_index",
+dep_wealth_model <- fit_glm(data=baseline, Y_name="depression", A_name="wealth_above_med",
                               covariates = c("month"),
                               family = "poisson")[1,]
 
 # had to drop union for the model to converge 
-dep_edu_model <- fit_glm(data=baseline, Y_name="depression", A_name="mother_edu",
+dep_edu_model <- fit_glm(data=baseline, Y_name="depression", A_name="edu_over_6",
                          covariates = c("wealth_index"), family = "poisson")[1,]
 
 
@@ -55,53 +65,10 @@ dep_father_work_model <- fit_glm(data=baseline, Y_name="depression",
                                  family = "poisson")[1,]
 
 
-depression_ORs <- bind_rows(
+depression_PRs <- bind_rows(
   dep_age_model, dep_income_model, dep_ownhouse_model,
   dep_hhsize_model, dep_latrine_flooded_model, dep_flood_prep_model,
   dep_wealth_model, dep_edu_model, dep_floodc_model, dep_father_work_model
 ) 
 
-# sort label by OR value
-depression_ORs$label <- factor(depression_ORs$label, levels = depression_ORs$label[order(depression_ORs$pt_estimate)])
-
-depression_ORs <- depression_ORs %>% mutate(var_cat = case_when(
-  label == "latrine_flooded" ~ "Flooding",
-  label == "flood_compound" ~ "Flooding",
-  label == "mother_age" ~ "Demographics",
-  label == "hhsize" ~ "Demographics",
-  label == "mother_edu" ~ "Demographics",
-  label == "income" ~ "Economics",
-  label == "flood_prepared" ~ "Flooding",
-  label == "father_work_agr" ~ "Demographics",
-  label == "wealth_index" ~ "Economics",
-  label == "own_house" ~ "Housing"
-))
-
-palette <- c(
-  "#9A6324",
-  "#3CB44B",
-  "#4363D8",
-  "#4d4c4b"
-
-)
-
-dep_PR_plot <- ggplot(depression_ORs, aes(x = label, y = pt_estimate, ymin = CI_lower, ymax = CI_upper)) +
-  geom_hline(yintercept = 1, color = "grey") +
-  geom_pointrange(aes(color = var_cat), size=0.25) +
-  scale_color_manual(values= palette) +
-  coord_flip() +
-  labs(y = "Prevalence Ratio") +
-  scale_y_continuous(trans= "log", breaks=seq(1,6,1),
-                     labels =seq(1,6,1)) + 
-  theme_minimal() +
-  theme(legend.title = element_blank(),
-        axis.title.y = element_blank())
-
-
-dep_PR_plot
-
-ggsave(
-  filename = paste0(figure_path, "rf_depression_PRs.png"),
-  plot = dep_PR_plot,
-  width = 4, height = 3, units = "in"
-)
+saveRDS(depression_PRs, paste0(results_path, "depression_PRs.RDS"))
