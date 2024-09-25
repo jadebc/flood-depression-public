@@ -26,7 +26,7 @@ dep_age_model <- fit_glm(data=baseline, Y_name="depression", A_name="age_over_23
                          family = "poisson")[1,]
 
 dep_income_model <- fit_glm(data=baseline, Y_name="depression", A_name="income_over_5",
-                            covariates = c("month"),
+                            covariates = c("month_b"),
                             family = "poisson")[1,]
 
 dep_ownhouse_model <- fit_glm(data=baseline, Y_name="depression", A_name="own_house",
@@ -37,16 +37,15 @@ dep_hhsize_model <- fit_glm(data=baseline, Y_name="depression", A_name="hhsize_o
                             covariates = "wealth_index", family = "poisson")[1,]
 
 dep_latrine_flooded_model <- fit_glm(data=baseline, Y_name="depression", A_name="latrine_flooded",
-                                covariates = c("wealth_index","month","mother_edu",
-                                               ),
+                                covariates = c("wealth_index","month_b","mother_edu"),
                                 family = "poisson")[1,]
 
 dep_flood_prep_model <- fit_glm(data=baseline, Y_name="depression", A_name="flood_prepared",
-                             covariates = c("wealth_index","month","mother_edu"),
+                             covariates = c("wealth_index","month_b","mother_edu"),
                              family = "poisson")[1,]
 
 dep_wealth_model <- fit_glm(data=baseline, Y_name="depression", A_name="wealth_above_med",
-                              covariates = c("month"),
+                              covariates = c("month_b"),
                               family = "poisson")[1,]
 
 # had to drop union for the model to converge 
@@ -55,13 +54,13 @@ dep_edu_model <- fit_glm(data=baseline, Y_name="depression", A_name="edu_over_6"
 
 
 dep_floodc_model <- fit_glm(data=baseline, Y_name="depression", A_name="flood_compound",
-                            covariates = c("wealth_index", "month", "dist_to_perm_water", "dist_to_seasonal_water"),
+                            covariates = c("wealth_index", "month_b", "dist_to_perm_water", "dist_to_seasonal_water"),
                             family = "poisson")[1,]
 
 # had to drop union for the model to converge 
 dep_father_work_model <- fit_glm(data=baseline, Y_name="depression", 
                                  A_name="father_work_agr",
-                                 covariates = c("wealth_index", "month"),
+                                 covariates = c("wealth_index", "month_b"),
                                  family = "poisson")[1,]
 
 

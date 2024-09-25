@@ -13,7 +13,7 @@ d = readRDS(paste0(data_dir, "/baseline_clean.RDS"))
 #d <- readRDS("/Users/suhi/Downloads/baseline_clean.RDS")
 
 # define covariates for regression models
-covariates <- c("month", "wealth_index", "mother_edu", "mother_age", "gestational_age")
+covariates <- c("month_b", "wealth_index", "mother_edu", "mother_age", "gestational_age")
 
 # assess potential non-linear relationship ----------------------
 ggplot(d, aes(x = dist_to_perm_water, y = depression)) +
