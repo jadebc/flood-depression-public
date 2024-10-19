@@ -86,7 +86,7 @@ reg <- reg %>%
   dplyr::select(outcome, label, "Adjusted prevalence ratio (95% CI)", e_value, e_value_CI_lower, e_value_CI_upper) %>%
   rename("E value" = e_value, "E value LL" = e_value_CI_lower, "E value UL" = e_value_CI_upper, Outcome = outcome, Label = label)
 
-write.csv(reg, file = paste0(table_path, "moderate_severe_depression_e_value.csv"), row.names = FALSE)
+write.csv(reg, file = paste0(table_path, "table_evalue_moderate_severe_depression.csv"), row.names = FALSE)
 
 ############################################################
 # Flooding and EPDS score
@@ -116,7 +116,7 @@ reg_epds <- reg_epds %>%
   dplyr::select(outcome, label, "Adjusted prevalence ratio (95% CI)", e_value, e_value_CI_lower, e_value_CI_upper) %>%
   rename("E value" = e_value, "E value LL" = e_value_CI_lower, "E value UL" = e_value_CI_upper, Outcome = outcome, Label = label)
 
-write.csv(reg_epds, file = paste0(table_path, "epds_score_e_value.csv"), row.names = FALSE)
+write.csv(reg_epds, file = paste0(table_path, "table_evalue_epds_score.csv"), row.names = FALSE)
 
 
 
@@ -154,4 +154,4 @@ epds <- epds %>%
   dplyr::select(Variable, "Adjusted prevalence ratio (95% CI)", e_value, e_value_CI_lower, e_value_CI_upper) %>%
   rename("E value" = e_value, "E value LL" = e_value_CI_lower, "E value UL" = e_value_CI_upper)
 
-write.csv(epds, file = paste0(table_path, "epds_individual_e_value.csv"), row.names = FALSE)
+write.csv(epds, file = paste0(table_path, "table_evalue_epds_individual.csv"), row.names = FALSE)
