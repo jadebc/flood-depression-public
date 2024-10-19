@@ -38,14 +38,12 @@ dep_hhsize_model <- fit_glm(data=baseline, Y_name="depression", A_name="hhsize_o
 
 dep_latrine_flooded_model <- fit_glm(data=baseline, Y_name="depression", A_name="latrine_flooded",
                                      covariates = c("wealth_index","month_b","mother_edu",
-                                                    "month_b", "mother_age","gestational_age",
-                                                    "dist_to_any_water"),
+                                                    "month_b", "mother_age","gestational_age"),
                                      family = "poisson")[1,]
 
 dep_flood_prep_model <- fit_glm(data=baseline, Y_name="depression", A_name="flood_prepared",
                                 covariates = c("wealth_index","month_b","mother_edu",
-                                               "month_b", "mother_age","gestational_age",
-                                               "dist_to_any_water"),
+                                               "month_b", "mother_age","gestational_age"),
                              family = "poisson")[1,]
 
 dep_wealth_model <- fit_glm(data=baseline, Y_name="depression", A_name="wealth_above_med",
@@ -58,7 +56,8 @@ dep_edu_model <- fit_glm(data=baseline, Y_name="depression", A_name="edu_over_6"
 
 
 dep_floodc_model <- fit_glm(data=baseline, Y_name="depression", A_name="flood_compound",
-                            covariates = c("wealth_index", "month_b", "dist_to_perm_water", "dist_to_seasonal_water"),
+                            covariates = c("wealth_index","month_b","mother_edu",
+                                           "month_b", "mother_age","gestational_age"),
                             family = "poisson")[1,]
 
 # had to drop union for the model to converge 
