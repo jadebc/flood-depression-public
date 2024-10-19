@@ -1,4 +1,0 @@
-"Outcome","Label","Adjusted prevalence ratio (95% CI)","E value","E value LL","E value UL"
-"EPDS","latrine_flooded","3.77 (1.03, 6.50)","7.00","1.21","NA"
-"EPDS","flood_compound","2.24 (0.61, 3.87)","3.91","1.00","NA"
-"EPDS","flood_union","0.78 (-0.23, 1.78)","1.90","NA","1.00"
