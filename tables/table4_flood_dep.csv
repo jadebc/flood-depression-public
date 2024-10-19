@@ -1,4 +1,4 @@
 "Variable","N","Mean among exposed","Mean among unexposed","Crude mean difference (95% CI)","Adjusted * mean difference (95% CI)"
-"Flooded latrine",881,"9.5","5.7","3.76 (0.99, 6.53)","3.77 (1.03, 6.50)"
-"Flooded compound",881,"8.3","5.6","2.67 (1.03, 4.31)","2.24 (0.61, 3.87)"
-"Flooded union",878,"6.6","5.6","0.98 (-0.04, 2.00)","0.78 (-0.23, 1.78)"
+"Flooded latrine",881,"9.5","5.7","3.76 (0.99, 6.53)","3.87 (1.14, 6.60)"
+"Flooded compound",881,"8.3","5.6","2.67 (1.03, 4.31)","2.34 (0.71, 3.96)"
+"Flooded union",878,"6.6","5.6","0.98 (-0.04, 2.00)","0.86 (-0.14, 1.86)"

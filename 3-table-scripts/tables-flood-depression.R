@@ -7,7 +7,7 @@
 rm(list = ls())
 source(paste0(here::here(), '/0-config.R'))
 
-tabdata <- readRDS("/Users/suhi/Downloads/baseline_clean.RDS")
+tabdata <- readRDS(paste0(data_dir, "/baseline_clean.RDS"))
 
 # test = tabdata %>% dplyr::select(depression, depression_severe)
 # sum(test$depression) #164

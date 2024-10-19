@@ -1,5 +1,5 @@
 "Outcome","Variable","N","Crude prevalence ratio (95% CI)","Adjusted * prevalence ratio (95% CI)"
-"Moderate or severe depression","Seasonal water",881,"0.92 (0.29, 2.68)","1.02 (0.32, 3.07)"
+"Moderate or severe depression","Seasonal water",881,"0.92 (0.29, 2.68)","1.02 (0.32, 3.06)"
 "Moderate or severe depression","Permanent water",881,"0.92 (0.81, 1.03)","0.95 (0.83, 1.07)"
-"Severe depression","Seasonal water",881,"0.13 (0.01, 0.91)","0.20 (0.02, 1.42)"
-"Severe depression","Permanent water",881,"0.79 (0.62, 0.96)","0.85 (0.67, 1.06)"
+"Severe depression","Seasonal water",881,"0.13 (0.01, 0.91)","0.19 (0.02, 1.37)"
+"Severe depression","Permanent water",881,"0.79 (0.62, 0.96)","0.86 (0.67, 1.06)"
