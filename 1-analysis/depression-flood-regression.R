@@ -14,7 +14,8 @@ d = readRDS(paste0(data_dir, "/baseline_clean.RDS"))
 
 
 # covariates for regression
-covariates <- c("month_b", "wealth_index", "mother_edu", "mother_age", "gestational_age", "dist_to_any_water")
+covariates <- c("month_b", "wealth_index", "mother_edu",
+                "father_edu", "mother_age", "gestational_age")
 
 # EPDS individual components and flooding in the compound association -----------------------------------
 
