@@ -1,16 +1,14 @@
-#########################################
+#####################################################
 # CRADLE depression and flooding analysis
 
 # regression analysis of flooding and depression
-#########################################
+#####################################################
 rm(list=ls())
 library(lubridate)
 library(readstata13)
 source(paste0(here::here(), '/0-config.R'))
 
 d = readRDS(paste0(data_dir, "/baseline_clean.RDS"))
-
-#d <- readRDS("/Users/suhi/Downloads/baseline_clean.RDS")
 
 
 # covariates for regression
@@ -76,7 +74,6 @@ epds_components_reg <- bind_rows(regression_results) %>%
   left_join(means_exposed_epds_comp, by = "outcome") %>% 
   left_join(means_unexposed_epds_comp, by = "outcome")
 
-#saveRDS(epds_components_reg, "/Users/suhi/Downloads/epds_individual_regression_results.RDS")
 saveRDS(epds_components_reg, paste0(data_dir, "epds_individual_regression_results.RDS"))
 
 # flooding in the latrine -----------------------------------------------
@@ -239,7 +236,6 @@ res_unadj <- data.frame(
 )
 
 
-#saveRDS(res_unadj, "/Users/suhi/Downloads/flooding_regression_results_unadj.RDS")
 saveRDS(res_unadj, paste0(data_dir, "flooding_regression_results_unadj.RDS"))
 
 # adjusted
@@ -258,7 +254,7 @@ res_adj <- data.frame(
   )
 )
 
-#saveRDS(res_adj, "/Users/suhi/Downloads/flooding_regression_results_adj.RDS")
+
 saveRDS(res_adj, paste0(data_dir, "flooding_regression_results_adj.RDS"))
 
 # save means
@@ -319,6 +315,4 @@ means <- data.frame(
                    mean_epds_floodc_exposed,
                    mean_epds_floodu_exposed))
 
-
-#saveRDS(means, "/Users/suhi/Downloads/flooding_mean_results.RDS")
 saveRDS(means, paste0(data_dir, "flooding_mean_results.RDS"))

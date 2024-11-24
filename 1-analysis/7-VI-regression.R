@@ -1,14 +1,15 @@
-#########################################
+#####################################################
 # CRADLE depression and flooding analysis
 
 # fit logistic regression model for top variables
 # in variable importance analysis
-#########################################
+#####################################################
 rm(list=ls())
 source(paste0(here::here(), '/0-config.R'))
 
 baseline = readRDS(paste0(data_dir, "baseline_clean.RDS"))
 
+# define variable for father works in agriculture 
 baseline$father_work_agr = as.factor(ifelse(baseline$father_work=="agriculture", 1, 0))
 
 # indicators for above median

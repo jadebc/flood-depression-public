@@ -1,8 +1,8 @@
-#########################################
+#############################################################################################
 # CRADLE depression and flooding analysis
 
-# regression analysis of flooding and depression
-#########################################
+# functions for regression analysis, random forest analysis and calculating wash outcomes 
+#############################################################################################
 
 ##############################################
 ##############################################
@@ -291,4 +291,43 @@ run_random_forest <- function(data, outcome, predictors) {
     var_importance_sorted = var_importance_sorted, 
     top_vars = top_vars
   ))
+}
+
+##############################################
+# Documentation: calc_wash_outcomes
+# Usage: calc_wash_outcomes(df)
+# Description: Calculates various Water, Sanitation, and Hygiene (WASH) outcomes based on survey responses and adds new variables to the dataframe. These outcomes include indicators for improved sanitation, sanitation ladder, open defecation, improved water, water ladder, and handwashing with soap and water.
+# Args/Options:
+#   df: A dataframe containing survey data, with columns for various WASH-related questions.
+# Returns: The input dataframe with additional columns representing WASH outcomes:
+#   - improved_san: Binary indicator (1 or 0) for improved sanitation, based on criteria for flush type, slab, and composting toilets.
+# - san_ladder: Categorical variable representing the sanitation ladder, with levels "Safely managed," "Basic," "Limited," or "Unimproved."
+# - open_defecation: Binary indicator (1 or 0) for open defecation.
+# - improved_water: Binary indicator (1 or 0) for improved water sources, based on accepted types.
+# - water_ladder: Categorical variable representing the water ladder, with levels "Basic," "Limited," or "Unimproved," based on the time to collect water.
+# - handwash_soap_water: Binary indicator (1 or 0) for the presence of both soap and water at handwashing facilities.
+# Note: Improved sanitation facilities are those designed to hygienically separate excreta from human contact, and include: flush/pour flush toilets connected to piped sewer systems, septic tanks or pit latrines; pit latrines with slabs (including ventilated pit latrines), and composting toilets (https://washdata.org/monitoring/sanitation).
+# Improved drinking water sources are those that have the potential to deliver safe water by nature of their design and construction, and include: piped water, boreholes or tubewells, protected dug wells, protected springs, rainwater, and packaged or delivered water (https://washdata.org/monitoring/drinking-water).
+##############################################
+calc_wash_outcomes <- function(df) {
+  df <- df %>%
+    mutate(improved_san = ifelse((q16_13 == 1 & q16_15 %in% c(1:3) & q16_14 == 1) |# pour flush flushes to approved source & has functional water seal
+                                   q16_11 == 1 | # or latrine has slab
+                                   q16_24 == 1, # or latrine is composting toilet 
+                                 1, 0),
+           san_ladder = case_when(
+             q16_25 == 0 & q16_13 == 1 & q16_15 %in% c(1:3) & q16_14 == 1 ~ "Safely managed",
+             q16_25 == 0 & improved_san == 1 ~ "Basic", # Unshared improved
+             q16_25 == 1 & improved_san == 1 ~ "Limited", # Shared improved
+             improved_san == 0 ~ "Unimproved",
+           ),
+           open_defecation = ifelse(q16_1 %in% c(1, 2), 1, 0),
+           improved_water = ifelse(q17_1 %in% c(1:8), 1, 0), # tubewells, boreholes, taps, piped, dug wells with concrete reinforcement
+           water_ladder = case_when(
+             q17_1b < 30 & improved_water == 1 ~ "Basic", # <30 min improved
+             q17_1b > 30 & improved_water == 1 ~ "Limited", # >30min improved
+             improved_water == 0 ~ "Unimproved"),
+           handwash_soap_water = ifelse(q15_91 == 1 & q15_92 == 1, 1, 0)
+    )
+  return(df)
 }

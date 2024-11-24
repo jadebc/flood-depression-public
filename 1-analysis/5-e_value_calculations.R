@@ -123,7 +123,6 @@ write.csv(reg_epds, file = paste0(table_path, "table_evalue_epds_score.csv"), ro
 ############################################################
 # Compound flooding and EPDS individual questions
 ###########################################################
-
 # Apply the E-value calculation to the pt_estimate column and create a new column 'e_value'
 epds <- epds %>% 
   mutate(e_value = sapply(pt_estimate, calculate_e_value))

@@ -1,8 +1,8 @@
-#########################################
+#################################################################
 # CRADLE depression and flooding analysis
 
-# regression analysis of surface water and depression
-#########################################
+# regression analysis of proportion of surface water and depression
+#################################################################
 rm(list=ls())
 source(paste0(here::here(), '/0-config.R'))
 
@@ -10,11 +10,10 @@ source(paste0(here::here(), '/0-config.R'))
 d = readRDS(paste0(data_dir, "/baseline_clean.RDS"))
 
 # for all the columns that start with prop_ multiply times 100
-# to get the proportion of the area that is water
+# to get the percent of the area that is water
 d <- d %>% 
   mutate_at(vars(starts_with("prop_")), funs(. * 100))
 
-# define covariates for regression models
 # covariates for regression
 covariates <- c("month_b", "wealth_index", "mother_edu",
                 "father_edu", "mother_age", "gestational_age")

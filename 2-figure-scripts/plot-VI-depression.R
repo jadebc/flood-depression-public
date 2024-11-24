@@ -132,7 +132,6 @@ dep_PR_plot <- ggplot(depression_PRs, aes(x = label_final, y = pt_estimate, ymin
   guides(color = guide_legend(override.aes = list(shape = 16, size = .6)))+
   ggtitle("b)")
 
-dep_PR_plot
 
 combined_plot <- grid.arrange(depression_plot, dep_PR_plot, nrow=1)
 

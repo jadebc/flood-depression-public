@@ -1,8 +1,8 @@
-#########################################
+#########################################################
 # CRADLE depression and flooding analysis
 
 # regression analysis of surface water and depression
-#########################################
+#########################################################
 rm(list=ls())
 source(paste0(here::here(), '/0-config.R'))
 
@@ -15,7 +15,7 @@ d = d %>%
          edd = as.Date(edd, format = "%Y-%m-%d"),
          conception_date = edd - 280) 
 
-gov_data_raw = read.csv("/Users/jadebc/Library/CloudStorage/Box-Box/Jade Benjamin-Chung's Externally Shareable Files/CRADLE-Data/Climate Data Sirajganj/climate_data_sirajganj.csv")
+gov_data_raw = read.csv(paste0(box_path_cradle_data, "/Climate Data Sirajganj/climate_data_sirajganj.csv"))
 
 gov_data = filter(gov_data_raw, !is.na(Sirajganj_WL)) %>% 
   mutate(date = as.Date(date, format = "%Y-%m-%d"))

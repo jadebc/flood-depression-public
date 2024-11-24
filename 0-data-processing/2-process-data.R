@@ -1,3 +1,9 @@
+##############################################################################
+# CRADLE depression and flooding analysis
+
+# process data to merge datasets and create necessary variables for analysis 
+##############################################################################
+
 
 rm(list=ls())
 #install.packages("psych")
@@ -15,12 +21,12 @@ library(gridExtra)
 library(assertthat)
 library(boxr)
 library(writexl)
+library(psych)
 
 source(paste0(here::here(), '/0-config.R'))
 
-# baseline_raw=read.dta13("/Users/suhi/Downloads/CRADLE_Baseline_data.dta", convert.factors=F)
-baseline_raw=read.dta13(paste0(box_path_cradle_data,"Baseline/CRADLE_Baseline_data.dta"), convert.factors=F)
-
+baseline_raw=read.dta13("/Users/suhi/Downloads/CRADLE_Baseline_data.dta", convert.factors=F)
+# baseline_raw=read.dta13(paste0(box_path_cradle_data,"Baseline/CRADLE_Baseline_data.dta"), convert.factors=F)
 
 #----------------------------------------
 # rename variables and create new variables
@@ -41,6 +47,36 @@ baseline <- baseline_raw %>%
     gestational_age < 27 ~ 2,
     TRUE ~ 3
   )) %>% 
+  # create household and demographic variables 
+  mutate(fuel_wood = ifelse(q19_3==1, 1, 0),
+         fuel_grass = ifelse(q19_3==2, 1, 0),
+         fuel_dung = ifelse(q19_3==3, 1, 0)) %>% 
+  mutate(private_toilet = ifelse(q16_28 == 1, 1, 0),
+         satisfied_house = ifelse(q14_30 <=2, 1, 0),
+         # roof material is bamboo or thatch 
+         roof_bamboo = ifelse(q6_1 == 1, 1, 0),
+         # roof material is tin 
+         roof_tin = ifelse(q6_1 == 2, 1, 0),
+         # wall material is jute 
+         wall_jute = ifelse(q6_2 == 1, 1, 0),
+         # wall material is bamboo
+         wall_bamboo = ifelse(q6_2 == 2, 1, 0),
+         # wall material is brick 
+         wall_brick = ifelse(q6_2 == 5, 1, 0),
+         # wall material is cement or concrete 
+         wall_cement = ifelse(q6_2 == 6, 1, 0),
+         # wall material is tin 
+         wall_tin = ifelse(q6_2 == 7, 1, 0),
+         # wall material is straw or leaves or stick 
+         wall_straw = ifelse(q6_2 == 8, 1, 0),
+         # floor material is earth or mud 
+         floor_mud = ifelse(q6_3 == 1, 1, 0)
+  ) %>% 
+  mutate(q1_3 = as.factor(q1_3)) %>% 
+  mutate(father_work_agri = ifelse(q5_3 == 3, 1, 0)) %>% 
+  # create binary variable for livestock ownership 
+  mutate(own_livestock = ifelse((q13_1 + q13_2 + q13_3) != 0, 1, 0)) %>% 
+  # rename variables 
   rename(union = q1_3,
          mother_age = q2_2,
          mother_edu = q5_1,
@@ -52,6 +88,7 @@ baseline <- baseline_raw %>%
          n_goat = q13_2,
          n_chicken = q13_3,
          elec = q19_21, 
+         mobile = q19_219, 
          fridge = q19_211, 
          bike = q19_212,
          moto = q19_213,
@@ -62,13 +99,7 @@ baseline <- baseline_raw %>%
          tubewell_flooded = q21_7,
          toilet_hhs = q16_26,
          toilet_share = q16_25
-  ) %>% 
-  mutate(fuel_wood = ifelse(q19_3==1, 1, 0),
-         fuel_grass = ifelse(q19_3==2, 1, 0),
-         fuel_dung = ifelse(q19_3==3, 1, 0)) %>% 
-  mutate(private_toilet = ifelse(q16_28 == 1, 1, 0),
-         satisfied_house = ifelse(q14_30 <=2, 1, 0)) %>% 
-  mutate(union = as.factor(union))
+  ) 
 
 #-----------------------------------------------
 # create binary variable for rainy vs dry months
@@ -99,9 +130,6 @@ baseline <- baseline %>%
 # add hygienic latrine variable 
 #----------------------------------------
 
-# baseline <- baseline %>%
-#   mutate(hygienic_latrine = ifelse(q16_13 == 1 & q16_14 == 1 & q16_11 == 1, 1, 0))
-
 # definition here: https://journals.plos.org/plosntds/article?id=10.1371/journal.pntd.0004256
 
 baseline <- baseline %>% mutate(
@@ -121,7 +149,6 @@ baseline <- baseline %>%
     latrine_canal_ditch == 1 | latrine_pit_no_seal == 1 | latrine_hanging == 1 ~ 0,
     TRUE ~ NA
   ))
-
 
 #----------------------------------------
 # replace missing codes with NA
@@ -183,8 +210,8 @@ baseline <- baseline %>%
 
 baseline <- baseline %>% #converting responses in hours to days 
   mutate(num_days_home_flooded = ifelse(q21_4a == 2, num_days_home_flooded / 24, num_days_home_flooded),
-        num_days_latrine_flooded = ifelse(q21_6a == 2, num_days_latrine_flooded / 24, num_days_latrine_flooded),
-        num_days_tubewell_flooded = ifelse(q21_8a == 2, num_days_tubewell_flooded / 24, num_days_tubewell_flooded))
+         num_days_latrine_flooded = ifelse(q21_6a == 2, num_days_latrine_flooded / 24, num_days_latrine_flooded),
+         num_days_tubewell_flooded = ifelse(q21_8a == 2, num_days_tubewell_flooded / 24, num_days_tubewell_flooded))
 
 
 #----------------------------------------
@@ -203,7 +230,6 @@ water <- read.csv("/Users/suhi/Downloads/Baseline_survey_water_dist.csv") %>%
 # merge
 baseline <- left_join(baseline, water, by = "dataid")
 
-
 #----------------------------------------
 # EPDS
 #----------------------------------------
@@ -213,11 +239,9 @@ baseline <- baseline %>%
   mutate(depression = ifelse(EPDS>9.5, 1,0),
          depression_severe = ifelse(EPDS>13, 1, 0))
 
-
 #----------------------------------------
 # wealth index
 #----------------------------------------
-library(psych)
 
 # exclude due to lack of variation
 # "q19_21", "q19_28","q19_215", "q19_216", "q19_217","q19_219","q19_220"
@@ -261,24 +285,23 @@ baseline <- baseline %>% mutate(wealth_index = index,
 baseline <- baseline %>%
   mutate(resilient = ifelse(flood_union == 1 & depression==0, 1, 0))
 
-
-
 #----------------------------------------
 # flood preparedness
 #----------------------------------------
 
-#flood_prep <- read_excel("/Users/suhi/Downloads/flood_preparedness_2024_08_16.xlsx")
-flood_prep <- read_excel(paste0(data_dir, "flood_preparedness_2024_08_16.xlsx"))
+flood_prep <- read_excel("/Users/suhi/Downloads/flood_preparedness_2024_08_16.xlsx")
+# flood_prep <- read_excel(paste0(data_dir, "flood_preparedness_2024_08_16.xlsx"))
 
 baseline <- bind_cols(baseline, flood_prep)
-
 
 #----------------------------------------
 # percent of surface water 
 #----------------------------------------
 
-#sw_df <- readRDS("/Users/suhi/Downloads/analysis_prop_surface_water.RDS")
-sw_df <- readRDS(paste0(data_dir, "analysis_prop_surface_water.RDS")) %>% 
+sw_df <- readRDS("/Users/suhi/Downloads/analysis_prop_surface_water.RDS") 
+# sw_df <- readRDS(paste0(data_dir, "analysis_prop_surface_water.RDS"))  
+
+sw_df <- sw_df %>% 
   dplyr::select(-union) %>% 
   mutate(dataid = as.character(dataid))
 
@@ -286,9 +309,7 @@ sw_df <- readRDS(paste0(data_dir, "analysis_prop_surface_water.RDS")) %>%
 baseline <- baseline %>%
   left_join(sw_df, by = c("dataid"))
 
-
-saveRDS(baseline, paste0(data_dir, "baseline_clean.RDS"))
-#saveRDS(baseline, "/Users/suhi/Downloads/baseline_clean.RDS")
-
+# saveRDS(baseline, paste0(data_dir, "baseline_clean.RDS"))
+saveRDS(baseline, "/Users/suhi/Downloads/baseline_clean.RDS")
 
 

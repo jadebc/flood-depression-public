@@ -39,7 +39,6 @@ s1 <- s1_unadj %>%
   dplyr::select(-outcome, -label)
 
 write.csv(s1, file = paste0(table_path, "s1_dist_to_sw_dep.csv"), row.names = FALSE)
-#write.csv(s1, "/Users/suhi/Downloads/s1_dist_to_sw_dep.csv", row.names = FALSE)
 
 
 # Table S2 -----------------------------------------------------------------------------------
@@ -69,6 +68,5 @@ s2 <- s2_unadj %>%
   dplyr::select(-label)
 
 write.csv(s2, file = paste0(table_path, "s2_dist_to_sw_epds.csv"), row.names = FALSE)
-#write.csv(s2, "/Users/suhi/Downloads/s2_dist_to_sw_epds.csv", row.names = FALSE)
 
   
