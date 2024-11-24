@@ -1,7 +1,7 @@
 #########################################################
 # CRADLE depression and flooding analysis
 
-# regression analysis of surface water and depression
+# regression analysis of surface water level and depression
 #########################################################
 rm(list=ls())
 source(paste0(here::here(), '/0-config.R'))
