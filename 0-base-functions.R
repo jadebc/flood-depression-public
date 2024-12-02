@@ -294,7 +294,7 @@ run_random_forest <- function(data, outcome, predictors) {
 }
 
 ##############################################
-# Documentation: calc_wash_outcomes
+# Function: calc_wash_outcomes
 # Usage: calc_wash_outcomes(df)
 # Description: Calculates various Water, Sanitation, and Hygiene (WASH) outcomes based on survey responses and adds new variables to the dataframe. These outcomes include indicators for improved sanitation, sanitation ladder, open defecation, improved water, water ladder, and handwashing with soap and water.
 # Args/Options:
@@ -311,23 +311,28 @@ run_random_forest <- function(data, outcome, predictors) {
 ##############################################
 calc_wash_outcomes <- function(df) {
   df <- df %>%
-    mutate(improved_san = ifelse((q16_13 == 1 & q16_15 %in% c(1:3) & q16_14 == 1) |# pour flush flushes to approved source & has functional water seal
-                                   q16_11 == 1 | # or latrine has slab
-                                   q16_24 == 1, # or latrine is composting toilet 
+    mutate(q15_91 = ifelse(is.na(q15_91), 0, q15_91),
+           q15_92 = ifelse(is.na(q15_92), 0, q15_92)) %>% 
+    mutate(improved_san = ifelse((q16_13 == 1 & q16_15 %in% c(1:3) & q16_14 == 1 & q16_11==1) |# has slab, pour flush flushes to approved source & has functional water seal
+                                   q16_24 == 1 , # or latrine is composting toilet 
                                  1, 0),
            san_ladder = case_when(
-             q16_25 == 0 & q16_13 == 1 & q16_15 %in% c(1:3) & q16_14 == 1 ~ "Safely managed",
              q16_25 == 0 & improved_san == 1 ~ "Basic", # Unshared improved
              q16_25 == 1 & improved_san == 1 ~ "Limited", # Shared improved
              improved_san == 0 ~ "Unimproved",
+             is.na(q16_25) & is.na(improved_san) ~ "Don't know/Missing"
            ),
-           open_defecation = ifelse(q16_1 %in% c(1, 2), 1, 0),
+           open_defecation_child = ifelse(q16_1 %in% c(1, 2), 1, 0),
            improved_water = ifelse(q17_1 %in% c(1:8), 1, 0), # tubewells, boreholes, taps, piped, dug wells with concrete reinforcement
            water_ladder = case_when(
-             q17_1b < 30 & improved_water == 1 ~ "Basic", # <30 min improved
+             q17_1b <= 30 & improved_water == 1 ~ "Basic", # <=30 min improved
              q17_1b > 30 & improved_water == 1 ~ "Limited", # >30min improved
-             improved_water == 0 ~ "Unimproved"),
+             improved_water == 0 ~ "Unimproved",
+             TRUE ~ "Uncategorized"),
+           improved_handwash_latrine = if_else(q15_8 == 2 & q15_91 == 1 & q15_92 == 1, 1, 0),
+           improved_handwash_kitchen = if_else(q15_8 == 3 & q15_91 == 1 & q15_92 == 1, 1, 0),
            handwash_soap_water = ifelse(q15_91 == 1 & q15_92 == 1, 1, 0)
+           
     )
   return(df)
 }

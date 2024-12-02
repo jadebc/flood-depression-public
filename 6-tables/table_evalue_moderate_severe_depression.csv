@@ -1,7 +1,0 @@
-"Outcome","Label","Adjusted prevalence ratio (95% CI)","E value","E value LL","E value UL"
-"depression","latrine_flooded","3.58 (1.49, 7.29)","6.61","2.34","NA"
-"depression","flood_compound","2.08 (1.14, 3.51)","3.58","1.54","NA"
-"depression","flood_union","1.41 (0.90, 2.11)","2.16","1.00","NA"
-"depression_severe","latrine_flooded","4.33 (1.01, 12.69)","8.13","1.13","NA"
-"depression_severe","flood_compound","1.42 (0.42, 3.54)","2.19","1.00","NA"
-"depression_severe","flood_union","1.19 (0.52, 2.37)","1.67","1.00","NA"

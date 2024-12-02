@@ -4,7 +4,6 @@
 # process data to merge datasets and create necessary variables for analysis 
 ##############################################################################
 
-
 rm(list=ls())
 #install.packages("psych")
 library(lubridate)
@@ -25,8 +24,7 @@ library(psych)
 
 source(paste0(here::here(), '/0-config.R'))
 
-baseline_raw=read.dta13("/Users/suhi/Downloads/CRADLE_Baseline_data.dta", convert.factors=F)
-# baseline_raw=read.dta13(paste0(box_path_cradle_data,"Baseline/CRADLE_Baseline_data.dta"), convert.factors=F)
+baseline_raw=read.dta13(paste0(box_path_cradle_data,"Baseline/CRADLE_Baseline_data.dta"), convert.factors=F)
 
 #----------------------------------------
 # rename variables and create new variables
@@ -153,7 +151,6 @@ baseline <- baseline %>%
 #----------------------------------------
 # replace missing codes with NA
 #----------------------------------------
-# replace missing with NA for assets
 baseline <- baseline %>% mutate(
   bike = ifelse(bike == 999, NA, bike),
   moto = ifelse(moto == 999, NA, moto),
@@ -213,19 +210,13 @@ baseline <- baseline %>% #converting responses in hours to days
          num_days_latrine_flooded = ifelse(q21_6a == 2, num_days_latrine_flooded / 24, num_days_latrine_flooded),
          num_days_tubewell_flooded = ifelse(q21_8a == 2, num_days_tubewell_flooded / 24, num_days_tubewell_flooded))
 
-
 #----------------------------------------
 # water distance
 #----------------------------------------
 
-# water <- read.csv(paste0(box_path_cradle_data, "Water-distance/Baseline_survey_water_dist.csv")) %>%
-#   mutate(dataid = as.character(dataid)) %>%
-#   dplyr::select(dataid, dist_to_perm_water, dist_to_seasonal_water)
-
-
-water <- read.csv("/Users/suhi/Downloads/Baseline_survey_water_dist.csv") %>%
+water <- read.csv(paste0(box_path_cradle_data, "Water-distance/Baseline_survey_water_dist.csv")) %>%
   mutate(dataid = as.character(dataid)) %>%
-  dplyr::select(dataid, dist_to_perm_water, dist_to_seasonal_water, dist_to_any_water)
+  dplyr::select(dataid, dist_to_perm_water, dist_to_seasonal_water)
 
 # merge
 baseline <- left_join(baseline, water, by = "dataid")
@@ -242,9 +233,6 @@ baseline <- baseline %>%
 #----------------------------------------
 # wealth index
 #----------------------------------------
-
-# exclude due to lack of variation
-# "q19_21", "q19_28","q19_215", "q19_216", "q19_217","q19_219","q19_220"
 
 asset_cols <- c(
   "q19_22", "q19_23", "q19_24", "q19_25", "q19_26", "q19_27", 
@@ -289,8 +277,7 @@ baseline <- baseline %>%
 # flood preparedness
 #----------------------------------------
 
-flood_prep <- read_excel("/Users/suhi/Downloads/flood_preparedness_2024_08_16.xlsx")
-# flood_prep <- read_excel(paste0(data_dir, "flood_preparedness_2024_08_16.xlsx"))
+flood_prep <- read_excel(paste0(data_dir, "flood_preparedness_2024_08_16.xlsx"))
 
 baseline <- bind_cols(baseline, flood_prep)
 
@@ -298,18 +285,36 @@ baseline <- bind_cols(baseline, flood_prep)
 # percent of surface water 
 #----------------------------------------
 
-sw_df <- readRDS("/Users/suhi/Downloads/analysis_prop_surface_water.RDS") 
-# sw_df <- readRDS(paste0(data_dir, "analysis_prop_surface_water.RDS"))  
+sw_df <- readRDS(paste0(data_dir, "analysis_prop_surface_water.RDS"))  
 
 sw_df <- sw_df %>% 
   dplyr::select(-union) %>% 
   mutate(dataid = as.character(dataid))
 
-
 baseline <- baseline %>%
   left_join(sw_df, by = c("dataid"))
 
-# saveRDS(baseline, paste0(data_dir, "baseline_clean.RDS"))
-saveRDS(baseline, "/Users/suhi/Downloads/baseline_clean.RDS")
+#----------------------------------------
+# Add WASH outcomes
+#----------------------------------------
+wash_outcomes <- calc_wash_outcomes(baseline_raw)
+
+wash_outcomes_vars <- wash_outcomes %>%
+  select(dataid, 
+         improved_san, 
+         san_ladder, 
+         open_defecation_child, 
+         improved_water, 
+         water_ladder, 
+         improved_handwash_latrine, 
+         improved_handwash_kitchen, 
+         handwash_soap_water) %>% 
+  mutate(dataid = as.character(dataid))
+
+baseline <- baseline %>%
+  left_join(wash_outcomes_vars, by = "dataid")
+
+saveRDS(baseline, paste0(data_dir, "baseline_clean.RDS"))
+
 
 

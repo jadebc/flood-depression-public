@@ -1,7 +1,7 @@
 #############################################
 # CRADLE depression and flooding analysis
 
-# Calculate e values for tables 3-5 
+# Calculate e values 
 #############################################
 
 rm(list = ls())
@@ -86,71 +86,4 @@ reg <- reg %>%
   dplyr::select(outcome, label, "Adjusted prevalence ratio (95% CI)", e_value, e_value_CI_lower, e_value_CI_upper) %>%
   rename("E value" = e_value, "E value LL" = e_value_CI_lower, "E value UL" = e_value_CI_upper, Outcome = outcome, Label = label)
 
-write.csv(reg, file = paste0(table_path, "table_evalue_moderate_severe_depression.csv"), row.names = FALSE)
-
-############################################################
-# Flooding and EPDS score
-###########################################################
-
-reg_epds <- readRDS(paste0(data_dir, "flooding_regression_results_adj.RDS")) %>% 
-  filter(label == "latrine_flooded" | label == "flood_compound" | label == "flood_union") %>% 
-  dplyr::select(outcome, label, pt_estimate, CI_lower, CI_upper) %>% 
-  filter(outcome == "EPDS")
-
-# Apply the E-value calculation to the pt_estimate column and create a new column 'e_value'
-reg_epds <- reg_epds %>% 
-  mutate(e_value = sapply(pt_estimate, calculate_e_value))
-
-# Apply the E-value CI calculation to the pt_estimate and CI_lower columns
-reg_epds <- reg_epds %>%
-  mutate(e_value_CI_lower = mapply(calculate_e_value_CI_LL, pt_estimate, CI_lower))
-
-
-# Apply the E-value CI calculation to the pt_estimate and CI_upper columns
-reg_epds <- reg_epds %>%
-  mutate(e_value_CI_upper = mapply(calculate_e_value_CI_UL, pt_estimate, CI_upper)) %>% 
-  mutate("Adjusted prevalence ratio (95% CI)" = sprintf("%.2f (%.2f, %.2f)", pt_estimate, CI_lower, CI_upper)) %>%
-  mutate(e_value = sprintf("%.2f", e_value),
-         e_value_CI_lower = sprintf("%.2f", e_value_CI_lower),
-         e_value_CI_upper = sprintf("%.2f", e_value_CI_upper)) %>% 
-  dplyr::select(outcome, label, "Adjusted prevalence ratio (95% CI)", e_value, e_value_CI_lower, e_value_CI_upper) %>%
-  rename("E value" = e_value, "E value LL" = e_value_CI_lower, "E value UL" = e_value_CI_upper, Outcome = outcome, Label = label)
-
-write.csv(reg_epds, file = paste0(table_path, "table_evalue_epds_score.csv"), row.names = FALSE)
-
-
-
-############################################################
-# Compound flooding and EPDS individual questions
-###########################################################
-# Apply the E-value calculation to the pt_estimate column and create a new column 'e_value'
-epds <- epds %>% 
-  mutate(e_value = sapply(pt_estimate, calculate_e_value))
-
-
-# Apply the E-value CI calculation to the pt_estimate and CI_lower columns
-epds <- epds %>%
-  mutate(e_value_CI_lower = mapply(calculate_e_value_CI_LL, pt_estimate, CI_lower))
-
-
-# Apply the E-value CI calculation to the pt_estimate and CI_upper columns
-epds <- epds %>%
-  mutate(e_value_CI_upper = mapply(calculate_e_value_CI_UL, pt_estimate, CI_upper)) %>% 
-  mutate("Adjusted prevalence ratio (95% CI)" = sprintf("%.2f (%.2f, %.2f)", pt_estimate, CI_lower, CI_upper)) %>%
-  mutate(e_value = sprintf("%.2f", e_value),
-         e_value_CI_lower = sprintf("%.2f", e_value_CI_lower),
-         e_value_CI_upper = sprintf("%.2f", e_value_CI_upper)) %>%
-  mutate(Variable = c("Difficult to see funny side of things",
-                      "Difficult to look forward to enjoyment",
-                      "Blamed self unnecessarily when things went wrong",
-                      "Felt anxious or worried for no good reason",
-                      "Felt scared or panicky for no good reason",
-                      "Things getting on top of self",
-                      "Difficulty sleeping due to unhappiness",
-                      "Felt sad or miserable",
-                      "Cried due to unhappiness",
-                      "Thoughts of self harm")) %>%
-  dplyr::select(Variable, "Adjusted prevalence ratio (95% CI)", e_value, e_value_CI_lower, e_value_CI_upper) %>%
-  rename("E value" = e_value, "E value LL" = e_value_CI_lower, "E value UL" = e_value_CI_upper)
-
-write.csv(epds, file = paste0(table_path, "table_evalue_epds_individual.csv"), row.names = FALSE)
+write.csv(reg, file = paste0(table_path, "a_table2_evalue_moderate_severe_depression.csv"), row.names = FALSE)
